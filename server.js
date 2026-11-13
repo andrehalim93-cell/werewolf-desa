@@ -4,7 +4,16 @@ const app = express(); app.use(cors()); app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/api/ai-story', (req, res) => res.json({ ai: false }));
-const server = http.createServer(app); const io = socketIo(server, { cors: { origin: "*" } });
+// Biar Render gak anggap server nganggur + buat UptimeRobot
+app.get('/health', (req, res) => res.send('OK'));
+app.get('/ping', (req, res) => res.send('pong'));
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: { origin: "*" },
+  pingInterval: 25000,
+  pingTimeout: 60000,
+  transports: ["websocket", "polling"]
+});
 const ROOMS = {};
 const ALL_ROLES = {
   villager: { emoji: '👨‍🌾', name: 'Villager', desc: 'Warga biasa. Siang hari vote gantung yang dicurigai.', color: '#8a8a8a', night: false },
@@ -53,7 +62,6 @@ io.on('connection', socket => {
   socket.on('werewolfChat', ({ code, msg }) => { let room = ROOMS[code]; if (!room || room.phase !== 'night') return; let p = room.players.find(x => x.id === socket.id); if (!p || !p.alive || !['werewolf','alpha'].includes(p.role)) return; msg = String(msg || '').trim().slice(0, 200); if(!msg) return; room.werewolfChat.push({ name: p.name, msg }); room.players.filter(x => ['werewolf', 'alpha'].includes(x.role) && x.alive).forEach(w => { io.to(w.id).emit('werewolfChatMsg', { chat: room.werewolfChat }); }); });
   socket.on('chatAll', ({ code, msg }) => { let room = ROOMS[code]; if (!room) return; if (room.phase !== 'day') return socket.emit('errorMsg', 'Chat tuduhan cuma bisa siang hari!'); let p = room.players.find(x => x.id === socket.id); if (!p || !p.alive) return socket.emit('errorMsg', 'Yang sudah mati gak bisa chat!'); msg = String(msg || '').trim().slice(0, 200); if (!msg) return; io.to(code).emit('chatAllMsg', { name: p.name, msg, time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }); });
   socket.on('sendAd', ({ code, image, duration, caption }) => { let room = ROOMS[code]; if (!room) return; if (room.hostId !== socket.id) return socket.emit('errorMsg', '⛔ Cuma HOST yang bisa kirim iklan!'); if (!image || typeof image !== 'string' || !image.startsWith('data:image/')) return socket.emit('errorMsg', 'Gambar iklan tidak valid! Pilih gambar lagi.'); if (image.length > 1500000) return socket.emit('errorMsg', 'Gambar terlalu besar! Max ~1MB.'); let dur = parseInt(duration); if (isNaN(dur)) dur = 5; dur = Math.max(2, Math.min(30, dur)); let cap = String(caption || '').trim().slice(0, 80); room.log.push(`📢 HOST kirim iklan (${dur} detik)`); io.to(code).emit('showAd', { image, duration: dur, caption: cap, from: room.players.find(p=>p.id===socket.id)?.name || 'HOST' }); socket.emit('adSent', { duration: dur }); });
-  // ===== BARU: VOICE CHAT - SIGNALING WEBRTC =====
   socket.on('voice-join', ({ code }) => {
     let room = ROOMS[code]; if (!room) return;
     if (!room.voiceUsers) room.voiceUsers = [];

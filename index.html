@@ -147,7 +147,6 @@ input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;b
 #adPanelGame input, #adPanelLobby input{padding:10px!important;font-size:13px!important;margin-bottom:8px!important}
 #adPreviewGame, #adPreviewLobby{max-height:90px!important}
 .adMiniToggle{background:#facc15;color:#000;font-weight:800;font-size:11px;padding:5px 10px;border-radius:99px;border:none}
-/* ===== VOICE + PTT ===== */
 #voiceBar{position:fixed;bottom:0;left:0;right:0;z-index:95;background:rgba(10,5,25,.95);border-top:2px solid #a855f7;padding:10px 12px;display:flex;align-items:center;gap:8px;backdrop-filter:blur(10px)}
 #voiceBar .vInfo{flex:1;min-width:0}
 #voiceBar .vInfo b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -176,7 +175,7 @@ input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;b
 <div id="adModal"><div class="adBox"><div class="adTop"><span>📢 IKLAN • DARI HOST</span><span id="adCountdown">5 detik</span></div><img id="adImage" src="" alt="Iklan"><div class="adCaption" id="adCaption"></div><div class="adProgress"><div id="adProgressFill"></div></div><div class="adBtnRow"><button class="btn btn-dark" style="padding:11px" onclick="closeAd()">✕ Tutup Iklan</button></div></div></div>
 <div id="winnerModal"><div class="winnerBox" id="winnerBox"><div class="confetti" id="winnerConfetti">🎉🎊🎉🎊🎉</div><div class="winnerEmoji" id="winnerEmoji">🐺</div><div class="winnerTitle" id="winnerTitle">WEREWOLF MENANG!</div><div class="winnerMsg" id="winnerMsg">...</div><div class="winnerList"><div class="winnerListTitle">📜 DAFTAR ROLE SEMUA PEMAIN</div><div id="winnerListContent"></div></div><button id="btnWinnerPlayAgain" class="btn btn-primary" style="padding:16px;font-size:15px" onclick="playAgainFromWinner()">🔄 MAIN LAGI - LANGSUNG MULAI!</button><div style="font-size:11px;color:#b9a5d6;margin-top:8px">Tanpa input nama & kode lagi • Room tetap sama</div><button class="btn btn-dark" style="margin-top:10px" onclick="closeWinnerPopup()">👀 LIHAT PAPAN GAME DULU</button></div></div>
 <div class="wrap">
-<div class="topBrand"><div class="logo">🐺</div><h1>DESA TERKUTUK</h1><p>SIAPA SERIGALA DI ANTARA KITA?</p><div style="margin-top:8px"><sp																																																an class="pill">🎙️ Narator Mbah Kromo</span> <span class="pill">✨ V7.1 Fixed</span></div></div>
+<div class="topBrand"><div class="logo">🐺</div><h1>DESA TERKUTUK</h1><p>SIAPA SERIGALA DI ANTARA KITA?</p><div style="margin-top:8px"><span class="pill">🎙️ Narator Mbah Kromo</span> <span class="pill">✨ V9 FIXED</span></div></div>
 <div id="connStatus">🔴 Belum nyambung ke server... tunggu / cek node server.js</div>
 <div id="homeScreen"><div class="homeWrap"><div class="card"><div style="text-align:center;font-size:12px;color:#d8c8f0;margin-bottom:12px">Masukin nama kamu dulu...</div><input type="text" id="nameInput" placeholder="Nama kamu..." maxlength="15" autocomplete="off"><input type="text" id="codeInput" placeholder="Kode Desa" maxlength="4" style="text-transform:uppercase" autocomplete="off"><div class="row2"><button class="btn btn-primary" id="btnCreate" onclick="createRoom()">🏠 BUAT DESA</button><button class="btn btn-dark" id="btnJoin" onclick="joinRoom()">🚪 GABUNG</button></div><div id="homeError" style="display:none;color:#ff6a6a;font-size:12px;text-align:center;margin-top:10px"></div><button class="btn btn-dark" style="margin-top:10px" onclick="openRules()">📜 LIHAT RULES DULU</button></div></div></div>
 <div id="lobbyScreen" style="display:none"><div class="lobbyWrap"><div class="card" style="text-align:center"><div style="font-size:11px;letter-spacing:2px;color:#b9a5d6">KODE DESA KAMU</div><div class="codeBig" id="roomCodeBig">----</div><button class="btn btn-dark btn-small" style="margin-top:8px" onclick="copyCode()">📋 Salin Kode</button></div><div class="card"><div class="cardTitle">👥 WARGA DESA <span id="lobbyCount"></span></div><div id="playerList"></div></div>
@@ -195,8 +194,6 @@ input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;b
 </div>
 </div>
 <div id="killCam"><div style="font-size:60px">🐺</div><div id="killCamText"></div><div id="killCamSub" style="color:#ccc"></div><button class="btn btn-dark" style="margin-top:16px;width:auto;padding:12px 24px" onclick="closeKillCam()">Tutup</button></div>
-
-<!-- VOICE BAR + PUSH TO TALK -->
 <div id="voiceBar" style="display:none">
   <div class="vInfo"><b id="voiceStatus">🎤 Voice OFF</b><small id="voiceSub">Klik NYALAIN buat ngobrol suara</small></div>
   <div id="voiceList"></div>
@@ -205,14 +202,20 @@ input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;b
   <button class="voiceBtn off" id="voiceMuteBtn" style="display:none" onclick="toggleMute()">🔊</button>
 </div>
 <div id="voiceAudios"></div>
-
 <audio id="bgm" loop><source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_2c8a7a5a3d.mp3" type="audio/mpeg"></audio>
 <audio id="howl"><source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_4d9c2a7b3d.mp3" type="audio/mpeg"></audio>
 <audio id="scream"><source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_4d9c2a7b3d.mp3" type="audio/mpeg"></audio>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 if (typeof io === 'undefined') { alert('JANGAN buka index.html langsung! Jalankan: node server.js, lalu buka http://localhost:3000'); throw new Error('socket.io not loaded'); }
-let socket = io(), myCode = null, myName = null, myRole = null, lastNarration = "", musicOn = true, socketConnected = false, currentPhase = 'lobby', isHostNow = false, myRoleData = null, lastPlayers = [];
+let socket = io({
+  reconnection: true,
+  reconnectionAttempts: 999,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000,
+  timeout: 20000,
+  transports: ["websocket", "polling"]
+}), myCode = null, myName = null, myRole = null, lastNarration = "", musicOn = true, socketConnected = false, currentPhase = 'lobby', isHostNow = false, myRoleData = null, lastPlayers = [];
 let pendingAdImage = null, adTimerInt = null;
 let voiceOn = false, voiceMuted = false, localStream = null, voicePeers = {}, voiceNames = {}, speakingCheckInt = null, mySpeaking = false;
 let pttMode = true, pttHolding = false;
@@ -238,8 +241,6 @@ const RULES = {
 };
 function openRules(){ let r=RULES[myRole]||null; let title=r?`${r.emoji} KAMU ADALAH ${r.name.toUpperCase()}`:'📜 RULES GAME - DESA TERKUTUK'; let content=''; if(r){ content=`<div class="ruleItem" style="border:1px solid #facc15"><b>🎯 TUGAS KAMU:</b><br>${r.task}</div><div class="ruleItem" style="border:1px solid #22c55e"><b>🏆 KONDISI MENANG:</b><br>${r.win}</div><div class="ruleItem"><b>💡 TIPS MBAH KROMO:</b><br>${r.tip}</div>`; } else content=`<div class="ruleItem">Belum dapet role? Rules umum dulu ya...</div>`; content+=`<div style="font-family:Cinzel;font-size:13px;margin:14px 0 6px">📖 SEMUA ROLE:</div>`+Object.values(RULES).map(x=>`<div class="ruleItem"><b>${x.emoji} ${x.name}:</b> ${x.task.split('.')[0]}.<br><span style="color:#22c55e">Menang: ${x.win}</span></div>`).join(''); el('rulesTitle').innerText=title; el('rulesContent').innerHTML=content; el('rulesModal').classList.add('show'); }
 function closeRules(){ el('rulesModal').classList.remove('show'); }
-
-// ===== VOICE CHAT + PUSH TO TALK =====
 function showVoiceBar(){ if(myCode) el('voiceBar').style.display='flex'; }
 function updateVoiceUI(){
   let btn = el('voiceMainBtn'), muteBtn = el('voiceMuteBtn'), pttBtn = el('pttModeBtn');
@@ -397,8 +398,9 @@ function closeWinnerPopup(){ el('winnerModal').classList.remove('show'); }
 function playAgainFromWinner(){ let btn=el('btnWinnerPlayAgain'); btn.disabled=true; btn.innerText='⏳ Mulai game baru...'; playAgain(); }
 function showAnnouncement(a){ if(!a) return; let banner=el('announceBanner'); banner.className=''; banner.id='announceBanner'; banner.classList.add('show',a.type); el('announceTitle').innerText=a.title; el('announceSub').innerText=a.sub||''; speak(a.title+'. '+(a.sub||'')); setTimeout(()=>{ banner.classList.remove('show'); },8000); let log=el('gameLog'); log.innerHTML=`<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:6px">📢 ${esc(a.title)} - ${esc(a.sub||'')}</div>`+log.innerHTML; }
 socket.on('connect', ()=>{ socketConnected=true; let s=el('connStatus'); s.classList.add('ok'); s.innerText='🟢 Tersambung ke server - siap main!'; setTimeout(()=>{ s.style.display='none'; },2500); });
-socket.on('disconnect', ()=>{ socketConnected=false; let s=el('connStatus'); s.style.display='block'; s.classList.remove('ok'); s.innerText='🔴 Putus dari server!'; });
-function createRoom(){ myName=el('nameInput').value.trim(); if(!myName){ showHomeError('Isi nama dulu!'); return; } if(!socketConnected){ showHomeError('Belum nyambung ke server!'); return; } let b=el('btnCreate'); b.disabled=true; b.innerText='⏳ Bikin Desa...'; socket.emit('createRoom',{name:myName}); setTimeout(()=>{ b.disabled=false; b.innerText='🏠 BUAT DESA'; },3000); }
+socket.on('disconnect', ()=>{ socketConnected=false; let s=el('connStatus'); s.style.display='block'; s.classList.remove('ok'); s.innerText='🔴 Putus dari server! Lagi nyambung ulang...'; });
+socket.on('reconnect', ()=>{ let s=el('connStatus'); s.classList.add('ok'); s.innerText='🟢 Nyambung lagi!'; setTimeout(()=>{ s.style.display='none'; },2000); });
+function createRoom(){ myName=el('nameInput').value.trim(); if(!myName){ showHomeError('Isi nama dulu!'); return; } if(!socketConnected){ showHomeError('Belum nyambung ke server! Tunggu bentar, Render lagi bangun...'); return; } let b=el('btnCreate'); b.disabled=true; b.innerText='⏳ Bikin Desa...'; socket.emit('createRoom',{name:myName}); setTimeout(()=>{ b.disabled=false; b.innerText='🏠 BUAT DESA'; },3000); }
 function joinRoom(){ myName=el('nameInput').value.trim(); let code=el('codeInput').value.trim(); if(!myName||!code){ showHomeError('Nama & kode harus diisi!'); return; } socket.emit('joinRoom',{code,name:myName}); }
 function startGame(){ socket.emit('startGame',{code:myCode}); }
 function playAgain(){ if(!myCode) return; socket.emit('playAgain',{code:myCode}); let b=document.getElementById('btnPlayAgain'); if(b){ b.disabled=true; b.innerText='⏳ Mulai game baru...'; } }

@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🐺 Werewolf - Desa Terkutuk</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Poppins',sans-serif;color:#fff;min-height:100vh;overflow-x:hidden;background:#070312}
+button{font-family:inherit;cursor:pointer;border:none}
+input{font-family:inherit;outline:none}
+#bg{position:fixed;inset:0;z-index:-2;background:radial-gradient(ellipse at 50% -10%,#2a1060 0%,#150836 35%,#070312 70%)}
+.stars{position:fixed;inset:0;z-index:-1;pointer-events:none}
+.stars i{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;opacity:.7;animation:twinkle 2s infinite alternate}
+@keyframes twinkle{from{opacity:.2}to{opacity:1}}
+#moonBig{position:fixed;top:18px;right:18px;width:72px;height:72px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff7cc,#f5d76e 60%,#d4a017);box-shadow:0 0 40px 12px rgba(245,215,110,.45);z-index:-1}
+#sunBig{position:fixed;top:18px;right:18px;width:72px;height:72px;border-radius:50%;background:radial-gradient(circle,#fff3a0,#ffb300);box-shadow:0 0 50px 15px rgba(255,180,0,.5);z-index:-1;display:none}
+.wrap{max-width:1280px;margin:0 auto;padding:14px 14px 90px}
+.topBrand{text-align:center;padding:14px 0 6px}
+.topBrand .logo{font-size:52px}
+.topBrand h1{font-family:'Cinzel',serif;font-size:28px;letter-spacing:2px;background:linear-gradient(90deg,#fff,#c9a6ff,#ff6ab2,#c9a6ff,#fff);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.topBrand p{font-size:11px;color:#b9a5d6;margin-top:4px;letter-spacing:1px}
+.pill{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);padding:5px 10px;border-radius:99px;font-size:11px}
+.card{background:linear-gradient(160deg,rgba(255,255,255,.12),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:16px;margin-bottom:14px;backdrop-filter:blur(14px)}
+.cardTitle{font-family:'Cinzel',serif;font-size:14px;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.35);color:#fff;font-size:14px;margin-bottom:10px}
+.btn{width:100%;padding:15px;border-radius:16px;font-weight:800;font-size:14px;transition:.2s}
+.btn:active{transform:scale(.97)}.btn:disabled{opacity:.6}
+.btn-primary{background:linear-gradient(90deg,#7c3aed,#a855f7,#ec4899);color:#fff}
+.btn-dark{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff}
+.btn-danger{background:linear-gradient(90deg,#ef4444,#f43f5e);color:#fff}
+.btn-small{width:auto;padding:7px 12px;border-radius:99px;font-size:12px}
+.row2{display:flex;gap:10px}.row2>*{flex:1}
+.player{display:flex;align-items:center;gap:10px;padding:11px 12px;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.08);border-radius:14px;margin-bottom:8px}
+.player.me{border-color:#a855f7}.player.dead{opacity:.45}
+.avatar{width:38px;height:38px;min-width:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:#fff}
+.avatar.a1{background:linear-gradient(135deg,#7c3aed,#ec4899)}.avatar.a2{background:linear-gradient(135deg,#0ea5e9,#22c55e)}.avatar.a3{background:linear-gradient(135deg,#f59e0b,#ef4444)}.avatar.a4{background:linear-gradient(135deg,#ec4899,#7c3aed)}.avatar.a5{background:linear-gradient(135deg,#22c55e,#0ea5e9)}
+.playerName{flex:1;min-width:0}.playerName b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.playerName small{font-size:10px;color:#b9a5d6}
+.hostBadge{background:#facc15;color:#000;font-size:10px;font-weight:800;padding:3px 7px;border-radius:99px}
+.dot{width:10px;height:10px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px #22c55e;flex-shrink:0}.dot.off{background:#666;box-shadow:none}
+.hostRange{width:100%;accent-color:#a855f7;height:8px;margin:10px 0 6px}
+.rangeRow{display:flex;justify-content:space-between;font-size:12px}
+.timeInput{padding:14px!important;text-align:center;font-size:20px!important;font-weight:800!important}
+.roleGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.roleChip{display:flex;align-items:center;gap:8px;padding:11px 10px;border-radius:14px;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.1);cursor:pointer;user-select:none}
+.roleChip.on{background:linear-gradient(135deg,rgba(124,58,237,.45),rgba(236,72,153,.35));border-color:#a855f7}
+.roleChip.disabled{opacity:.55;pointer-events:none}
+.roleChip .check{width:22px;height:22px;min-width:22px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:13px}
+.roleChip.on .check{background:#22c55e}
+.roleChip b{font-size:12px;display:block}.roleChip small{font-size:10px;color:#cbb8e8;display:block}
+#narrationBox{background:linear-gradient(160deg,#1e1038,#0f0820);border:1px solid #a855f7;border-radius:18px;padding:16px;font-size:13.5px;line-height:1.65;min-height:96px;white-space:pre-wrap}
+#timerCard{text-align:center;border:1px solid rgba(168,85,247,.6);border-radius:20px;padding:12px;margin-bottom:14px;background:rgba(0,0,0,.4)}
+#timerDigital{font-size:38px;font-weight:800;font-family:'Cinzel',serif;color:#c9a6ff}
+#timerFill{height:8px;background:linear-gradient(90deg,#7c3aed,#ec4899);border-radius:99px;transition:width 1s linear}
+.voteBar{display:flex;flex-wrap:wrap;gap:8px}.voteBar button{flex:1 1 30%;padding:11px 4px;font-size:12px;font-weight:700;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:12px}
+.roleCard{perspective:900px;cursor:pointer;margin:0 auto;width:220px;height:290px}.roleInner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:.7s}.roleCard.flipped .roleInner{transform:rotateY(180deg)}.roleFront,.roleBack{position:absolute;inset:0;backface-visibility:hidden;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;text-align:center}.roleFront{background:linear-gradient(160deg,#2a1650,#12082a);border:2px solid #a855f7}.roleBack{transform:rotateY(180deg);background:linear-gradient(160deg,#1a1030,#0a0518);border:2px solid #a855f7}
+#killCam{position:fixed;inset:0;background:rgba(0,0,0,.94);display:none;align-items:center;justify-content:center;flex-direction:column;z-index:99;text-align:center;padding:20px}#killCam.show{display:flex}#killCamText{font-family:'Cinzel',serif;font-size:32px;color:#ff2a2a;margin-bottom:8px}
+.small{font-size:11px;color:#b9a5d6}#gameLog{font-size:11.5px;line-height:1.5;max-height:300px;overflow:auto}#gameLog div{padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+#wolfChatList{font-size:12px;max-height:120px;overflow:auto;margin-bottom:8px}
+.codeBig{font-size:32px;letter-spacing:8px;font-family:'Cinzel',serif;color:#fff;background:linear-gradient(90deg,#a855f7,#ec4899);padding:10px 6px;border-radius:14px;text-align:center}
+#connStatus{font-size:11px;text-align:center;padding:6px 10px;border-radius:99px;margin-bottom:10px;background:rgba(255,0,0,.2);border:1px solid #ff2a2a}
+#connStatus.ok{background:rgba(0,200,0,.2);border-color:#22c55e}
+#chatAllCard{border-color:#facc15}
+.chatAllList{max-height:160px;overflow:auto;margin-bottom:10px}
+.chatAllList div{padding:7px 10px;background:rgba(0,0,0,.3);border-radius:12px;margin-bottom:6px;font-size:12.5px;line-height:1.4}
+.chatAllList b{color:#facc15}.chatAllList small{color:#b9a5d6;font-size:10px;margin-left:6px}
+.chatInputRow{display:flex;gap:8px}.chatInputRow input{margin:0}.chatInputRow button{width:auto;padding:12px 16px;white-space:nowrap}
+#rulesBtn{position:fixed;top:12px;right:12px;z-index:90;background:linear-gradient(90deg,#facc15,#f59e0b);color:#000;font-weight:800;font-size:12px;padding:10px 14px;border-radius:99px;box-shadow:0 6px 20px rgba(250,204,21,.5);width:auto}
+#rulesModal{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:100;display:none;align-items:center;justify-content:center;padding:16px}
+#rulesModal.show{display:flex}
+.rulesBox{background:linear-gradient(160deg,#1e1038,#0a0518);border:2px solid #facc15;border-radius:20px;padding:20px;max-width:420px;width:100%;max-height:85vh;overflow:auto}
+.rulesBox h3{font-family:'Cinzel',serif;margin-bottom:10px}
+.ruleItem{padding:10px 12px;background:rgba(255,255,255,.06);border-radius:12px;margin-bottom:8px;font-size:12.5px;line-height:1.5}
+.ruleItem b{color:#facc15}
+#announceBanner{display:none;background:linear-gradient(90deg,#7c3aed,#ec4899);border-radius:16px;padding:14px 16px;margin-bottom:14px;text-align:center;animation:popIn .4s ease}
+#announceBanner.show{display:block}
+#announceBanner.killed{background:linear-gradient(90deg,#991b1b,#ef4444)}
+#announceBanner.saved{background:linear-gradient(90deg,#065f46,#22c55e)}
+#announceBanner.poison{background:linear-gradient(90deg,#4c1d95,#a855f7)}
+#announceBanner.peace{background:linear-gradient(90deg,#0e7490,#06b6d4)}
+#announceBanner h3{font-size:16px;margin-bottom:4px}
+#announceBanner p{font-size:12px;opacity:.9}
+@keyframes popIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.gameGrid{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:820px){ .gameGrid{grid-template-columns:1fr 1fr 1fr;align-items:start} .gameGrid .leftCol,.gameGrid .midCol,.gameGrid .rightCol{position:sticky;top:14px} }
+@media(min-width:820px) and (max-width:1100px){ .gameGrid{grid-template-columns:1fr 1fr} .gameGrid .rightCol{grid-column:span 2} }
+.homeWrap{max-width:480px;margin:0 auto}.lobbyWrap{max-width:520px;margin:0 auto}
+.actionBtn{width:100%;display:flex;align-items:center;gap:10px;padding:12px 12px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:14px;margin-bottom:8px;text-align:left;transition:.15s}
+.actionBtn:active{transform:scale(.98);background:#7c3aed}
+.actionBtn .aAvatar{width:36px;height:36px;min-width:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+.actionBtn .aName{flex:1;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.actionBtn .aBadge{font-size:11px;background:rgba(255,255,255,.12);padding:4px 8px;border-radius:99px}
+.actionBtn.wolf{background:linear-gradient(135deg,rgba(239,68,68,.25),rgba(0,0,0,.3));border-color:#ef4444}
+.actionBtn.voteBtn{background:linear-gradient(135deg,rgba(124,58,237,.3),rgba(0,0,0,.3));border-color:#a855f7}
+.voteTallyItem{background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:10px 12px;margin-bottom:8px}
+.voteTallyItem.leader{border-color:#facc15;box-shadow:0 0 14px rgba(250,204,21,.25)}
+.voteTallyTop{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.voteTallyTop b{font-size:13px}
+.voteTallyTop span{font-size:12px;font-weight:800;background:#facc15;color:#000;padding:2px 8px;border-radius:99px}
+.voteBarBg{height:10px;background:rgba(255,255,255,.12);border-radius:99px;overflow:hidden}
+.voteBarFill{height:100%;background:linear-gradient(90deg,#facc15,#f59e0b);border-radius:99px;transition:width .4s}
+.voteVoters{font-size:11px;color:#cbb8e8;margin-top:6px;line-height:1.4}
+.voteProgress{font-size:11px;color:#b9a5d6;text-align:center;margin-bottom:8px}
+#winnerModal{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
+#winnerModal.show{display:flex}
+.winnerBox{width:100%;max-width:460px;background:linear-gradient(160deg,#1e1038,#0a0518);border:3px solid #facc15;border-radius:24px;padding:22px;text-align:center;max-height:90vh;overflow:auto;animation:winnerPop .45s cubic-bezier(.2,1.4,.4,1)}
+.winnerBox.wolf{border-color:#ef4444;box-shadow:0 0 40px rgba(239,68,68,.4)}
+.winnerBox.villagers{border-color:#22c55e;box-shadow:0 0 40px rgba(34,197,94,.35)}
+.winnerBox.jester{border-color:#f59e0b;box-shadow:0 0 40px rgba(245,158,11,.4)}
+@keyframes winnerPop{from{transform:scale(.7) translateY(30px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.winnerEmoji{font-size:72px;animation:floatWinner 2s ease-in-out infinite}
+@keyframes floatWinner{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-8px) scale(1.05)}}
+.winnerTitle{font-family:'Cinzel',serif;font-size:26px;letter-spacing:1px;margin:10px 0 6px}
+.winnerMsg{font-size:13px;color:#d8c8f0;line-height:1.6;margin-bottom:14px}
+.winnerList{text-align:left;background:rgba(0,0,0,.3);border-radius:14px;padding:10px;margin-bottom:14px;max-height:220px;overflow:auto}
+.winnerListTitle{font-family:'Cinzel',serif;font-size:12px;letter-spacing:1px;margin-bottom:8px;text-align:center}
+.winnerRow{display:flex;align-items:center;gap:10px;padding:8px 8px;border-bottom:1px solid rgba(255,255,255,.06)}
+.winnerRow .wAvatar{width:32px;height:32px;min-width:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
+.winnerRow .wInfo{flex:1;min-width:0}
+.winnerRow .wInfo b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.winnerRow .wInfo small{font-size:11px;color:#b9a5d6}
+.winnerRow .wBadge{font-size:11px;font-weight:800;padding:4px 8px;border-radius:99px;white-space:nowrap}
+.winnerRow.isWinner{border:1px solid #facc15;border-radius:10px;background:rgba(250,204,21,.08)}
+.confetti{font-size:22px;letter-spacing:6px;margin-bottom:6px}
+#adModal{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;display:none;align-items:center;justify-content:center;padding:16px}
+#adModal.show{display:flex}
+.adBox{width:100%;max-width:480px;background:#000;border:3px solid #facc15;border-radius:20px;overflow:hidden;animation:winnerPop .35s ease;text-align:center}
+.adTop{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#facc15;color:#000;font-weight:800;font-size:12px}
+.adTop span:last-child{background:#000;color:#fff;padding:4px 10px;border-radius:99px;font-size:12px}
+#adImage{width:100%;max-height:60vh;object-fit:contain;background:#000;display:block}
+.adCaption{padding:10px 12px;font-size:13px;line-height:1.5;color:#fff}
+.adProgress{height:8px;background:rgba(255,255,255,.15)}
+#adProgressFill{height:100%;background:linear-gradient(90deg,#facc15,#f59e0b);width:100%;transition:width 1s linear}
+.adBtnRow{display:flex;gap:8px;padding:10px 12px}
+.fileBtn{display:block;text-align:center;padding:12px;border-radius:12px;background:rgba(255,255,255,.1);border:1px dashed rgba(255,255,255,.4);cursor:pointer;font-weight:700;font-size:13px;margin-bottom:10px}
+#adPreview{width:100%;max-height:180px;object-fit:contain;border-radius:12px;display:none;margin-bottom:10px;background:#000}
+.adDurationRow{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.adDurationRow label{font-size:12px;flex:1}
+.adDurationRow input{margin:0!important;text-align:center;font-weight:800;font-size:18px!important}
+#adPanelGame, #adPanelLobby{padding:10px 12px!important}
+.adMiniHead{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer}
+.adMiniHead b{font-size:12px}
+.adMiniBody{display:none;margin-top:10px}
+.adMiniBody.open{display:block}
+#adPanelGame .fileBtn, #adPanelLobby .fileBtn{padding:9px!important;font-size:12px!important;margin-bottom:8px!important}
+#adPanelGame input, #adPanelLobby input{padding:10px!important;font-size:13px!important;margin-bottom:8px!important}
+#adPreviewGame, #adPreviewLobby{max-height:90px!important}
+.adMiniToggle{background:#facc15;color:#000;font-weight:800;font-size:11px;padding:5px 10px;border-radius:99px;border:none}
+/* ===== VOICE + PTT ===== */
+#voiceBar{position:fixed;bottom:0;left:0;right:0;z-index:95;background:rgba(10,5,25,.95);border-top:2px solid #a855f7;padding:10px 12px;display:flex;align-items:center;gap:8px;backdrop-filter:blur(10px)}
+#voiceBar .vInfo{flex:1;min-width:0}
+#voiceBar .vInfo b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#voiceBar .vInfo small{font-size:10px;color:#b9a5d6}
+.voiceBtn{padding:11px 14px;border-radius:99px;font-weight:800;font-size:12px;white-space:nowrap}
+.voiceBtn.on{background:linear-gradient(90deg,#22c55e,#16a34a);color:#fff;animation:pulseMic 1.2s infinite}
+.voiceBtn.off{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2)}
+.voiceBtn.muted{background:#ef4444;color:#fff}
+@keyframes pulseMic{0%{box-shadow:0 0 0 0 rgba(34,197,94,.5)}100%{box-shadow:0 0 0 10px rgba(34,197,94,0)}}
+#voiceList{display:flex;gap:6px;flex-wrap:wrap;max-width:45%}
+.voiceChip{font-size:11px;padding:5px 8px;border-radius:99px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);white-space:nowrap}
+.voiceChip.speaking{background:#22c55e;color:#000;font-weight:800;border-color:#22c55e;animation:pulseMic 1s infinite}
+.voiceChip.me{border-color:#a855f7}
+#voiceAudios{display:none}
+#voiceMainBtn.ptt-hold{background:linear-gradient(90deg,#22c55e,#16a34a)!important;color:#fff!important;transform:scale(1.05);box-shadow:0 0 20px rgba(34,197,94,.8);animation:pulseMic 0.8s infinite}
+#voiceMainBtn.ptt-idle{background:#334155!important;color:#fff;border:2px dashed rgba(255,255,255,.4)}
+#pttModeBtn.on{background:#facc15;color:#000;font-weight:800}
+#pttModeBtn.off{background:rgba(255,255,255,.12);color:#fff}
+#voiceBar.ptt-active{border-top-color:#22c55e}
+</style>
+</head>
+<body>
+<div id="bg"></div><div class="stars" id="stars"></div><div id="moonBig"></div><div id="sunBig"></div>
+<button id="rulesBtn" onclick="openRules()">📜 RULES</button>
+<div id="rulesModal" onclick="if(event.target===this) closeRules()"><div class="rulesBox"><div style="display:flex;justify-content:space-between;align-items:center"><h3 id="rulesTitle">📜 RULES & TUGAS KAMU</h3><button class="btn btn-dark btn-small" onclick="closeRules()">✕ Tutup</button></div><div id="rulesContent"></div><div style="margin-top:12px;font-size:11px;color:#b9a5d6;text-align:center">Siang = Chat + Voice + Vote Gantung • Malam = Role malam beraksi • Yang mati gak bisa chat / voice</div></div></div>
+<div id="adModal"><div class="adBox"><div class="adTop"><span>📢 IKLAN • DARI HOST</span><span id="adCountdown">5 detik</span></div><img id="adImage" src="" alt="Iklan"><div class="adCaption" id="adCaption"></div><div class="adProgress"><div id="adProgressFill"></div></div><div class="adBtnRow"><button class="btn btn-dark" style="padding:11px" onclick="closeAd()">✕ Tutup Iklan</button></div></div></div>
+<div id="winnerModal"><div class="winnerBox" id="winnerBox"><div class="confetti" id="winnerConfetti">🎉🎊🎉🎊🎉</div><div class="winnerEmoji" id="winnerEmoji">🐺</div><div class="winnerTitle" id="winnerTitle">WEREWOLF MENANG!</div><div class="winnerMsg" id="winnerMsg">...</div><div class="winnerList"><div class="winnerListTitle">📜 DAFTAR ROLE SEMUA PEMAIN</div><div id="winnerListContent"></div></div><button id="btnWinnerPlayAgain" class="btn btn-primary" style="padding:16px;font-size:15px" onclick="playAgainFromWinner()">🔄 MAIN LAGI - LANGSUNG MULAI!</button><div style="font-size:11px;color:#b9a5d6;margin-top:8px">Tanpa input nama & kode lagi • Room tetap sama</div><button class="btn btn-dark" style="margin-top:10px" onclick="closeWinnerPopup()">👀 LIHAT PAPAN GAME DULU</button></div></div>
+<div class="wrap">
+<div class="topBrand"><div class="logo">🐺</div><h1>DESA TERKUTUK</h1><p>SIAPA SERIGALA DI ANTARA KITA?</p><div style="margin-top:8px"><sp																																																an class="pill">🎙️ Narator Mbah Kromo</span> <span class="pill">✨ V7.1 Fixed</span></div></div>
+<div id="connStatus">🔴 Belum nyambung ke server... tunggu / cek node server.js</div>
+<div id="homeScreen"><div class="homeWrap"><div class="card"><div style="text-align:center;font-size:12px;color:#d8c8f0;margin-bottom:12px">Masukin nama kamu dulu...</div><input type="text" id="nameInput" placeholder="Nama kamu..." maxlength="15" autocomplete="off"><input type="text" id="codeInput" placeholder="Kode Desa" maxlength="4" style="text-transform:uppercase" autocomplete="off"><div class="row2"><button class="btn btn-primary" id="btnCreate" onclick="createRoom()">🏠 BUAT DESA</button><button class="btn btn-dark" id="btnJoin" onclick="joinRoom()">🚪 GABUNG</button></div><div id="homeError" style="display:none;color:#ff6a6a;font-size:12px;text-align:center;margin-top:10px"></div><button class="btn btn-dark" style="margin-top:10px" onclick="openRules()">📜 LIHAT RULES DULU</button></div></div></div>
+<div id="lobbyScreen" style="display:none"><div class="lobbyWrap"><div class="card" style="text-align:center"><div style="font-size:11px;letter-spacing:2px;color:#b9a5d6">KODE DESA KAMU</div><div class="codeBig" id="roomCodeBig">----</div><button class="btn btn-dark btn-small" style="margin-top:8px" onclick="copyCode()">📋 Salin Kode</button></div><div class="card"><div class="cardTitle">👥 WARGA DESA <span id="lobbyCount"></span></div><div id="playerList"></div></div>
+<div class="card" id="adPanelLobby" style="display:none;border-color:#facc15"><div class="adMiniHead" onclick="toggleAdMini('Lobby')"><div><b>📢 KIRIM IKLAN</b> <span class="pill" style="background:#facc15;color:#000;font-weight:800;padding:2px 7px;font-size:10px">HOST ONLY</span></div><button class="adMiniToggle" id="adToggleLobby">+ Buka</button></div><div class="adMiniBody" id="adMiniBodyLobby"><label class="fileBtn" for="adFileLobby">📁 PILIH GAMBAR IKLAN</label><input type="file" id="adFileLobby" accept="image/*" style="display:none" onchange="onAdFile(this,'adPreviewLobby')"><img id="adPreviewLobby"><input type="text" id="adCaptionLobby" placeholder="Caption iklan (opsional)" maxlength="80"><div class="adDurationRow"><label>⏱️ Detik muncul?</label><input type="number" id="adDurationLobby" value="5" min="2" max="30"></div><div style="display:flex;gap:8px"><button class="btn btn-small" style="flex:1;background:#facc15;color:#000;padding:10px;border-radius:12px;font-weight:800;font-size:12px" onclick="sendAd('Lobby')">📢 KIRIM</button><button class="btn btn-dark btn-small" style="flex:1;padding:10px;font-size:12px" onclick="clearAd('Lobby')">🗑️ Hapus</button></div></div></div>
+<div class="card" id="hostPanel" style="display:none"><div class="cardTitle">⚙️ PENGATURAN HOST</div><div class="rangeRow"><span>🐺 Jumlah Werewolf</span><b id="wolfCountLabel">1 🐺</b></div><input type="range" class="hostRange" id="wolfCount" min="1" max="3" value="1" oninput="updateHostConfig()"><div style="display:flex;gap:10px;margin:14px 0 4px"><label style="flex:1">🌙 Malam (detik)<input type="number" class="timeInput" id="nightTime" value="35" min="10" max="120" onchange="updateHostConfig()"></label><label style="flex:1">☀️ Siang (detik)<input type="number" class="timeInput" id="dayTime" value="45" min="10" max="120" onchange="updateHostConfig()"></label></div><div style="font-size:12px;margin:10px 0 2px;font-weight:700">🎭 Role yang aktif: ketuk untuk on/off</div><div id="roleToggles" class="roleGrid"></div></div><button id="startBtn" class="btn btn-primary" style="display:none;padding:18px;font-size:16px" onclick="startGame()">🌕 MULAI GAME - KUNCI GERBANG!</button></div></div>
+<div id="gameScreen" style="display:none">
+<div style="display:flex;gap:8px;margin-bottom:12px"><button class="btn btn-dark btn-small" style="flex:1" onclick="speakLast()">🔊 ULANG NARASI</button><button id="musicCtrl" class="btn btn-dark btn-small" style="flex:1" onclick="toggleMusic()">🔊 MUSIK ON</button></div>
+<div id="announceBanner"><h3 id="announceTitle">💀 Budi DIBUNUH!</h3><p id="announceSub">...</p></div>
+<div class="card" id="adPanelGame" style="display:none;border-color:#facc15"><div class="adMiniHead" onclick="toggleAdMini('Game')"><div><b>📢 KIRIM IKLAN</b> <span class="pill" style="background:#facc15;color:#000;font-weight:800;padding:2px 7px;font-size:10px">HOST ONLY</span></div><button class="adMiniToggle" id="adToggleGame">+ Buka</button></div><div class="adMiniBody" id="adMiniBodyGame"><label class="fileBtn" for="adFileGame">📁 PILIH GAMBAR IKLAN</label><input type="file" id="adFileGame" accept="image/*" style="display:none" onchange="onAdFile(this,'adPreviewGame')"><img id="adPreviewGame"><input type="text" id="adCaptionGame" placeholder="Caption iklan (opsional)" maxlength="80"><div class="adDurationRow"><label>⏱️ Detik muncul?</label><input type="number" id="adDurationGame" value="5" min="2" max="30"></div><div style="display:flex;gap:8px"><button class="btn btn-small" style="flex:1;background:#facc15;color:#000;padding:10px;border-radius:12px;font-weight:800;font-size:12px" onclick="sendAd('Game')">📢 KIRIM</button><button class="btn btn-dark btn-small" style="flex:1;padding:10px;font-size:12px" onclick="clearAd('Game')">🗑️ Hapus</button></div></div></div>
+<div id="timerCard"><div id="timerPhase">🌙 MALAM</div><div style="display:flex;align-items:center;justify-content:center;gap:14px;margin:8px 0"><canvas id="analogClock" width="110" height="110"></canvas><div><div id="timerDigital">--</div><div class="small">detik lagi</div><div class="pill" id="phasePill">🌙 Berburu</div></div></div><div style="background:rgba(255,255,255,.12);border-radius:99px;overflow:hidden"><div id="timerFill" style="width:100%"></div></div></div>
+<div class="gameGrid">
+<div class="leftCol"><div class="card"><div class="cardTitle">📜 BUKU DESA</div><div id="gameLog"></div></div><div id="narrationBox">Mbah Kromo sedang bercerita...</div><div id="loverInfo" style="text-align:center;margin:10px 0;font-size:12px;color:#ff6ab2"></div><div class="card" id="chatAllCard" style="display:none;border-color:#facc15"><div class="cardTitle">💬 CHAT DESA - TUDUH SIAPA WEREWOLF-NYA! <span class="pill" style="background:#facc15;color:#000;font-weight:800">☀️ SIANG AJA</span></div><div class="chatAllList" id="chatAllList"><div style="text-align:center;color:#b9a5d6;background:transparent">Belum ada tuduhan... Ayo mulai nuduh! 👇</div></div><div class="chatInputRow"><input type="text" id="chatAllInput" placeholder="Tuduh siapa? Contoh: Budi kayaknya werewolf..." maxlength="200"><button class="btn btn-primary btn-small" onclick="sendChatAll()">Kirim 💬</button></div><div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><button class="btn btn-dark btn-small" onclick="quickAccuse('mencurigakan banget!')">🤔 Mencurigakan!</button><button class="btn btn-dark btn-small" onclick="quickAccuse('diem aja dari tadi!')">🤫 Diem aja!</button><button class="btn btn-dark btn-small" onclick="quickAccuse('bukan aku!')">😇 Bukan aku!</button></div></div></div>
+<div class="midCol"><div style="text-align:center;margin-bottom:14px"><div id="roleCardWrap"></div><div class="small" style="margin-top:8px">Ketuk kartu untuk buka / tutup</div></div><div class="card"><div class="cardTitle">👥 WARGA HIDUP <span id="aliveCount"></span></div><div id="playersGame"></div></div><div class="card" id="wolfCave" style="display:none;border-color:#ff2a2a"><div class="cardTitle" style="color:#ff6a6a">🐺 GUA SERIGALA (Rahasia!)</div><div id="wolfChatList"></div><div style="display:flex;gap:8px"><input type="text" id="wolfChatInput" placeholder="Rencana berburu..." style="margin:0"><button class="btn btn-danger btn-small" style="width:auto;padding:12px 16px" onclick="sendWolfChat()">Kirim</button></div></div></div>
+<div class="rightCol"><div class="card" style="border-color:#facc15;box-shadow:0 0 20px rgba(250,204,21,.15)"><div class="cardTitle">🗳️ VOTING & AKSI <span class="pill" style="background:#facc15;color:#000;font-weight:800"></span></div><div id="voteArea"></div><div id="actionArea" style="margin-top:8px"></div><div id="voteTallyWrap"></div><div id="voteLog" style="display:none"></div></div><div class="card" style="background:rgba(255,255,255,.05)"><div style="font-size:12px;font-weight:700;margin-bottom:6px">💡 Cara main:</div><div style="font-size:11px;color:#b9a5d6;line-height:1.6">Siang = Voice + Chat + klik nama di kanan buat vote gantung.<br>Malam = klik nama di kanan buat bunuh / heal / intip sesuai role kamu.<br>Yang paling banyak vote-nya ada 👑 di atas kartunya.</div></div></div>
+</div>
+</div>
+</div>
+<div id="killCam"><div style="font-size:60px">🐺</div><div id="killCamText"></div><div id="killCamSub" style="color:#ccc"></div><button class="btn btn-dark" style="margin-top:16px;width:auto;padding:12px 24px" onclick="closeKillCam()">Tutup</button></div>
+
+<!-- VOICE BAR + PUSH TO TALK -->
+<div id="voiceBar" style="display:none">
+  <div class="vInfo"><b id="voiceStatus">🎤 Voice OFF</b><small id="voiceSub">Klik NYALAIN buat ngobrol suara</small></div>
+  <div id="voiceList"></div>
+  <button class="voiceBtn off" id="pttModeBtn" onclick="togglePTTMode()" title="Ganti mode">🎙️ PTT: ON</button>
+  <button class="voiceBtn off" id="voiceMainBtn">🎤 NYALAIN VOICE</button>
+  <button class="voiceBtn off" id="voiceMuteBtn" style="display:none" onclick="toggleMute()">🔊</button>
+</div>
+<div id="voiceAudios"></div>
+
+<audio id="bgm" loop><source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_2c8a7a5a3d.mp3" type="audio/mpeg"></audio>
+<audio id="howl"><source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_4d9c2a7b3d.mp3" type="audio/mpeg"></audio>
+<audio id="scream"><source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_4d9c2a7b3d.mp3" type="audio/mpeg"></audio>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+if (typeof io === 'undefined') { alert('JANGAN buka index.html langsung! Jalankan: node server.js, lalu buka http://localhost:3000'); throw new Error('socket.io not loaded'); }
+let socket = io(), myCode = null, myName = null, myRole = null, lastNarration = "", musicOn = true, socketConnected = false, currentPhase = 'lobby', isHostNow = false, myRoleData = null, lastPlayers = [];
+let pendingAdImage = null, adTimerInt = null;
+let voiceOn = false, voiceMuted = false, localStream = null, voicePeers = {}, voiceNames = {}, speakingCheckInt = null, mySpeaking = false;
+let pttMode = true, pttHolding = false;
+const el = id => document.getElementById(id);
+function esc(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function showHomeError(msg){ let e=el('homeError'); e.style.display='block'; e.innerText=msg; }
+(function(){ let h=''; for(let i=0;i<35;i++){ h+=`<i style="left:${(Math.random()*100).toFixed(1)}%;top:${(Math.random()*55).toFixed(1)}%"></i>`; } el('stars').innerHTML=h; })();
+function avatarClass(name){ let s=0; for(let c of name) s+=c.charCodeAt(0); return 'a'+(s%5+1); }
+function copyCode(){ if(!myCode) return; navigator.clipboard?.writeText(myCode).then(()=>alert('Kode '+myCode+' tersalin!')).catch(()=>alert('Kode: '+myCode)); }
+const ROLE_EMOJI = { villager:'👨‍🌾', werewolf:'🐺', alpha:'👑', seer:'🔮', doctor:'💉', bodyguard:'🛡️', mayor:'🎩', witch:'🧙', cupid:'💘', jester:'🤡' };
+const ROLE_NAME = { villager:'Villager', werewolf:'Werewolf', alpha:'Alpha Wolf', seer:'Seer', doctor:'Doctor', bodyguard:'Bodyguard', mayor:'Mayor', witch:'Witch', cupid:'Cupid', jester:'Jester' };
+const RULES = {
+  villager: { emoji:'👨‍🌾', name:'Villager', task:'Kamu warga biasa. Gak punya kekuatan malam. Tugasmu: perhatiin gerak-gerik temenmu siang hari, chat tuduhan, lalu vote gantung yang paling mencurigakan.', win:'MENANG kalau semua Werewolf & Alpha mati.', tip:'Jangan diem aja siang hari, yang diem biasanya dicurigai!' },
+  werewolf: { emoji:'🐺', name:'Werewolf', task:'Malam hari pilih 1 mangsa bareng werewolf lain. Siang hari pura-pura jadi warga, ikut tuduh orang lain biar gak ketauan.', win:'MENANG kalau jumlah Werewolf >= jumlah Warga yang hidup.', tip:'Chat di Gua Serigala buat sepakat mangsa yang sama!' },
+  alpha: { emoji:'👑', name:'Alpha Wolf', task:'Kamu bos serigala. Votemu malam hari dihitung 2x. Pimpin werewolf lain pilih mangsa.', win:'MENANG kalau jumlah Werewolf >= jumlah Warga yang hidup.', tip:'Kalau werewolf lain bingung, kamu yang tentuin mangsa!' },
+  seer: { emoji:'🔮', name:'Seer', task:'Malam hari intip 1 orang, kamu akan tau role aslinya. Siang hari kasih kode ke warga tanpa ngaku kamu Seer (nanti dibunuh duluan).', win:'MENANG kalau semua Werewolf mati.', tip:'Jangan langsung ngaku Seer di chat, werewolf akan incar kamu malam ini!' },
+  doctor: { emoji:'💉', name:'Doctor', task:'Malam hari pilih 1 orang untuk DI-HEAL. BOLEH jaga diri sendiri, BOLEH jaga orang yang sama tiap malam. Kalau orang itu diserang werewolf, dia SELAMAT dan kamu TETAP HIDUP. Heal = nyelametin orang yang malam itu dipilih werewolf, bukan ngidupin yang udah mati.', win:'MENANG kalau semua Werewolf mati.', tip:'Kamu aman, gak mati kalau berhasil nyelametin. Lindungi Seer / orang yang vokal!' },
+  bodyguard: { emoji:'🛡️', name:'Bodyguard', task:'Malam hari pilih 1 orang untuk DIJAGA. GAK BOLEH jaga diri sendiri! GAK BOLEH jaga orang yang sama 2 malam berturut-turut! Kalau orang itu diserang, KAMU MATI GANTIIN DIA, dia selamat.', win:'MENANG kalau semua Werewolf mati.', tip:'Kamu itu TUMBAL. Jangan asal jaga, pilih yang paling mungkin diincar werewolf!' },
+  mayor: { emoji:'🎩', name:'Mayor', task:'Kamu warga biasa tapi vote siangmu dihitung 2x. Suaramu sangat berpengaruh saat vote gantung.', win:'MENANG kalau semua Werewolf mati.', tip:'Vote terakhir biar bisa nentuin hasil akhir!' },
+  witch: { emoji:'🧙', name:'Witch', task:'Punya 1x Heal (selametin korban werewolf) & 1x Poison (racun 1 orang). Sekali pakai saja. Pilih target dulu baru klik Heal / Poison.', win:'MENANG kalau semua Werewolf mati.', tip:'Jangan buru-buru pakai Poison malam pertama, sayang!' },
+  cupid: { emoji:'💘', name:'Cupid', task:'Malam pertama jodohkan 2 orang jadi LOVERS. Kalau 1 lovers mati, 1 lagi ikut mati bunuh diri.', win:'MENANG kalau semua Werewolf mati. Kalau kamu jadi Lovers, kamu ikut menang bareng lovers-mu.', tip:'Jodohin 2 orang yang kamu percaya warga, jangan jodohin werewolf!' },
+  jester: { emoji:'🤡', name:'Jester', task:'Kamu badut. Tugasmu ANEH: bikin warga vote gantung KAMU siang hari. Kalau kamu digantung, kamu langsung MENANG sendirian!', win:'MENANG SENDIRIAN kalau kamu digantung siang hari. Kalah kalau dibunuh werewolf / mati malam.', tip:'Bertingkah mencurigakan di chat siang biar semua vote kamu!' }
+};
+function openRules(){ let r=RULES[myRole]||null; let title=r?`${r.emoji} KAMU ADALAH ${r.name.toUpperCase()}`:'📜 RULES GAME - DESA TERKUTUK'; let content=''; if(r){ content=`<div class="ruleItem" style="border:1px solid #facc15"><b>🎯 TUGAS KAMU:</b><br>${r.task}</div><div class="ruleItem" style="border:1px solid #22c55e"><b>🏆 KONDISI MENANG:</b><br>${r.win}</div><div class="ruleItem"><b>💡 TIPS MBAH KROMO:</b><br>${r.tip}</div>`; } else content=`<div class="ruleItem">Belum dapet role? Rules umum dulu ya...</div>`; content+=`<div style="font-family:Cinzel;font-size:13px;margin:14px 0 6px">📖 SEMUA ROLE:</div>`+Object.values(RULES).map(x=>`<div class="ruleItem"><b>${x.emoji} ${x.name}:</b> ${x.task.split('.')[0]}.<br><span style="color:#22c55e">Menang: ${x.win}</span></div>`).join(''); el('rulesTitle').innerText=title; el('rulesContent').innerHTML=content; el('rulesModal').classList.add('show'); }
+function closeRules(){ el('rulesModal').classList.remove('show'); }
+
+// ===== VOICE CHAT + PUSH TO TALK =====
+function showVoiceBar(){ if(myCode) el('voiceBar').style.display='flex'; }
+function updateVoiceUI(){
+  let btn = el('voiceMainBtn'), muteBtn = el('voiceMuteBtn'), pttBtn = el('pttModeBtn');
+  pttBtn.innerText = pttMode ? '🎙️ PTT: ON' : '🎙️ PTT: OFF';
+  pttBtn.className = 'voiceBtn ' + (pttMode ? 'on' : 'off');
+  el('voiceBar').classList.toggle('ptt-active', voiceOn && pttMode);
+  if(!voiceOn){
+    btn.className='voiceBtn off'; btn.innerText='🎤 NYALAIN VOICE'; btn.classList.remove('ptt-hold','ptt-idle');
+    el('voiceStatus').innerText='🎤 Voice OFF'; el('voiceSub').innerText='Klik NYALAIN buat ngobrol suara'; muteBtn.style.display='none';
+  } else if(pttMode){
+    if(pttHolding){
+      btn.className='voiceBtn ptt-hold'; btn.innerText='🟢 LAGI NGOMONG... LEPAS BUAT DIEM';
+      el('voiceStatus').innerText='🟢 Lagi Ngomong (PTT)'; el('voiceSub').innerText='Lepas tombol buat mute lagi';
+    } else {
+      btn.className='voiceBtn ptt-idle'; btn.innerText='🎙️ TAHAN BUAT NGOMONG';
+      el('voiceStatus').innerText='🎙️ PTT Siap - Tahan tombol buat ngomong'; el('voiceSub').innerText='Mic ke-mute, tahan tombol biar kedengeran';
+    }
+    muteBtn.style.display='none';
+  } else if(voiceMuted){
+    btn.className='voiceBtn muted'; btn.innerText='🔇 VOICE MATI - KLIK BUAT MATIIN';
+    el('voiceStatus').innerText='🔇 Voice MATIIN (Mute)'; el('voiceSub').innerText='Kamu di-mute, orang lain gak denger kamu';
+    muteBtn.style.display='block'; muteBtn.innerText='🔇';
+  } else {
+    btn.className='voiceBtn on'; btn.innerText='🟢 VOICE ON - KLIK BUAT MATIIN';
+    el('voiceStatus').innerText='🟢 Voice ON - Lagi ngobrol'; el('voiceSub').innerText='Suara kamu kedengeran semua pemain';
+    muteBtn.style.display='block'; muteBtn.innerText='🔊';
+  }
+  let list = el('voiceList');
+  let names = Object.values(voiceNames);
+  list.innerHTML = names.map(n=>`<span class="voiceChip ${n.speaking?'speaking':''}">${n.speaking?'🟢 ':''}${esc(n.name)}</span>`).join('') || '';
+}
+function togglePTTMode(){
+  pttMode = !pttMode; pttHolding = false;
+  if(pttMode && voiceOn){ setVoiceMuted(true); }
+  if(!pttMode && voiceOn){ setVoiceMuted(false); }
+  updateVoiceUI();
+}
+function setPTTHolding(holding){
+  if(!voiceOn || !pttMode) return;
+  if(currentPhase === 'night') return;
+  pttHolding = holding;
+  setVoiceMuted(!holding, true);
+  updateVoiceUI();
+}
+async function toggleVoice(){
+  if(!myCode) return alert('Masuk room dulu!');
+  if(voiceOn){ stopVoice(); return; }
+  try{
+    localStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation:true, noiseSuppression:true, autoGainControl:true }, video:false });
+    voiceOn = true;
+    voiceMuted = pttMode ? true : false;
+    if(localStream) localStream.getAudioTracks().forEach(t=>t.enabled = !voiceMuted);
+    socket.emit('voice-join', { code: myCode });
+    startSpeakingDetection();
+    updateVoiceUI();
+    if(currentPhase === 'night'){ setVoiceMuted(true); alert('🌙 Malam hari voice auto-mute! Nanti siang baru bisa PTT lagi.'); }
+  }catch(e){ alert('Mic ditolak / gak ada mic! Cek izin mic di browser HP kamu, harus Izinkan.'); console.log(e); }
+}
+function stopVoice(){
+  voiceOn = false; pttHolding = false;
+  clearInterval(speakingCheckInt);
+  if(localStream) localStream.getTracks().forEach(t=>t.stop());
+  Object.values(voicePeers).forEach(pc=>{ try{pc.close()}catch(e){} });
+  voicePeers = {}; voiceNames = {};
+  document.getElementById('voiceAudios').innerHTML='';
+  if(myCode) socket.emit('voice-leave', { code: myCode });
+  updateVoiceUI();
+}
+function setVoiceMuted(m, fromPTT){
+  voiceMuted = m;
+  if(localStream) localStream.getAudioTracks().forEach(t=>t.enabled = !m);
+  if(!fromPTT) updateVoiceUI();
+}
+function toggleMute(){ setVoiceMuted(!voiceMuted); }
+function createPeer(targetId){
+  let pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+  if(localStream) localStream.getTracks().forEach(t=>pc.addTrack(t, localStream));
+  pc.onicecandidate = e => { if(e.candidate) socket.emit('voice-ice', { to: targetId, candidate: e.candidate }); };
+  pc.ontrack = e => {
+    let audioId = 'audio-'+targetId;
+    let old = document.getElementById(audioId); if(old) old.remove();
+    let a = document.createElement('audio'); a.id = audioId; a.autoplay = true; a.playsInline = true; a.srcObject = e.streams[0];
+    document.getElementById('voiceAudios').appendChild(a);
+  };
+  voicePeers[targetId] = pc;
+  return pc;
+}
+async function makeOffer(targetId){
+  let pc = createPeer(targetId);
+  let offer = await pc.createOffer(); await pc.setLocalDescription(offer);
+  socket.emit('voice-offer', { to: targetId, offer });
+}
+function startSpeakingDetection(){
+  if(!localStream) return;
+  try{
+    let ctx = new (window.AudioContext || window.webkitAudioContext)();
+    let src = ctx.createMediaStreamSource(localStream);
+    let analyser = ctx.createAnalyser(); analyser.fftSize = 512;
+    src.connect(analyser);
+    let data = new Uint8Array(analyser.frequencyBinCount);
+    speakingCheckInt = setInterval(()=>{
+      if(!voiceOn || voiceMuted){ if(mySpeaking){ mySpeaking=false; socket.emit('voice-speaking',{code:myCode,speaking:false}); } return; }
+      analyser.getByteFrequencyData(data);
+      let avg = data.reduce((a,b)=>a+b,0)/data.length;
+      let speaking = avg > 18;
+      if(speaking !== mySpeaking){ mySpeaking = speaking; socket.emit('voice-speaking',{code:myCode,speaking}); }
+    }, 300);
+  }catch(e){}
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  let btn = el('voiceMainBtn');
+  if(!btn) return;
+  btn.addEventListener('click', ()=>{
+    if(!voiceOn) toggleVoice();
+    else if(!pttMode) toggleVoice();
+  });
+  btn.addEventListener('touchstart', (e)=>{ if(voiceOn && pttMode){ e.preventDefault(); setPTTHolding(true); } }, {passive:false});
+  btn.addEventListener('touchend', (e)=>{ if(voiceOn && pttMode){ e.preventDefault(); setPTTHolding(false); } });
+  btn.addEventListener('touchcancel', ()=>{ if(voiceOn && pttMode) setPTTHolding(false); });
+  btn.addEventListener('mousedown', ()=>{ if(voiceOn && pttMode) setPTTHolding(true); });
+  btn.addEventListener('mouseup', ()=>{ if(voiceOn && pttMode) setPTTHolding(false); });
+  btn.addEventListener('mouseleave', ()=>{ if(voiceOn && pttMode) setPTTHolding(false); });
+  document.addEventListener('keydown', (e)=>{
+    if(e.code === 'Space' && voiceOn && pttMode && !e.repeat){
+      let tag = document.activeElement?.tagName;
+      if(tag === 'INPUT' || tag === 'TEXTAREA') return;
+      e.preventDefault(); setPTTHolding(true);
+    }
+  });
+  document.addEventListener('keyup', (e)=>{ if(e.code === 'Space' && voiceOn && pttMode){ setPTTHolding(false); } });
+});
+socket.on('voice-users', async d => { for(let id of d.users){ await makeOffer(id); } });
+socket.on('voice-user-joined', async d => { voiceNames[d.id] = { name: d.name, speaking:false }; updateVoiceUI(); await makeOffer(d.id); });
+socket.on('voice-user-left', d => { if(voicePeers[d.id]){ try{voicePeers[d.id].close()}catch(e){} delete voicePeers[d.id]; } delete voiceNames[d.id]; let a=document.getElementById('audio-'+d.id); if(a) a.remove(); updateVoiceUI(); });
+socket.on('voice-count', d => { if(voiceOn) el('voiceSub').innerText = `${d.count} orang lagi voice • Tahan tombol buat ngomong`; });
+socket.on('voice-offer', async d => { let pc = voicePeers[d.from] || createPeer(d.from); await pc.setRemoteDescription(new RTCSessionDescription(d.offer)); let answer = await pc.createAnswer(); await pc.setLocalDescription(answer); socket.emit('voice-answer', { to: d.from, answer }); });
+socket.on('voice-answer', async d => { let pc = voicePeers[d.from]; if(pc) await pc.setRemoteDescription(new RTCSessionDescription(d.answer)); });
+socket.on('voice-ice', async d => { let pc = voicePeers[d.from]; if(pc && d.candidate) try{ await pc.addIceCandidate(new RTCIceCandidate(d.candidate)); }catch(e){} });
+socket.on('voice-speaking', d => { if(voiceNames[d.id]){ voiceNames[d.id].speaking = d.speaking; } else { voiceNames[d.id] = { name: d.name || 'Pemain', speaking: d.speaking }; } updateVoiceUI(); });
+function applyVoicePhase(){
+  if(!voiceOn) return;
+  if(currentPhase === 'night'){ setVoiceMuted(true); el('voiceSub').innerText = '🌙 Malam hari - Voice auto-mute biar gak ketauan role!'; }
+}
+function toggleAdMini(where){ let body=el('adMiniBody'+where); let btn=el('adToggle'+where); let isOpen=body.classList.contains('open'); if(isOpen){ body.classList.remove('open'); btn.innerText='+ Buka'; } else { body.classList.add('open'); btn.innerText='- Tutup'; } }
+function updateAdPanels(){ let show=isHostNow; el('adPanelLobby').style.display=show?'block':'none'; el('adPanelGame').style.display=(show && el('gameScreen').style.display!=='none')?'block':'none'; }
+function onAdFile(input, previewId){ let file=input.files && input.files[0]; if(!file) return; if(!file.type.startsWith('image/')) return alert('Pilih file gambar ya! (JPG / PNG)'); if(file.size>1000000) return alert('Gambar kebesaran! Max 1MB.'); let reader=new FileReader(); reader.onload=e=>{ pendingAdImage=e.target.result; let img=el(previewId); img.src=pendingAdImage; img.style.display='block'; }; reader.readAsDataURL(file); }
+function sendAd(where){ if(!isHostNow) return alert('⛔ Cuma HOST yang bisa kirim iklan!'); if(!pendingAdImage) return alert('Pilih gambar iklan dulu! Klik 📁 PILIH GAMBAR IKLAN'); let dur=parseInt(el('adDuration'+where).value)||5; let cap=el('adCaption'+where).value.trim(); socket.emit('sendAd',{code:myCode,image:pendingAdImage,duration:dur,caption:cap}); }
+function clearAd(where){ pendingAdImage=null; el('adPreview'+where).style.display='none'; el('adPreview'+where).src=''; el('adFile'+where).value=''; el('adCaption'+where).value=''; }
+function showAd(d){ clearInterval(adTimerInt); el('adImage').src=d.image; el('adCaption').innerText=d.caption?d.caption+`  •  dari ${d.from}`:`Iklan dari ${d.from}`; let left=d.duration; el('adCountdown').innerText=left+' detik'; el('adProgressFill').style.width='100%'; el('adModal').classList.add('show'); adTimerInt=setInterval(()=>{ left--; if(left<=0){ closeAd(); return; } el('adCountdown').innerText=left+' detik'; el('adProgressFill').style.width=(left/d.duration*100)+'%'; },1000); }
+function closeAd(){ clearInterval(adTimerInt); el('adModal').classList.remove('show'); }
+socket.on('showAd', d=>{ showAd(d); });
+socket.on('adSent', d=>{ alert(`📢 Iklan terkirim! Muncul ${d.duration} detik di semua HP!`); });
+function showWinnerPopup(d){ let box=el('winnerBox'); box.className='winnerBox'; let emoji='🏆', title='GAME SELESAI!', confetti='🎉🎊🎉'; if(d.winner==='werewolves'){ emoji='🐺'; title='WEREWOLF MENANG!'; confetti='🐺🌕🐺🌕🐺'; box.classList.add('wolf'); } else if(d.winner==='villagers'){ emoji='🎉'; title='VILLAGER MENANG!'; confetti='🎉🎊✨🎊🎉'; box.classList.add('villagers'); } else if(d.winner==='jester'){ emoji='🤡'; title='JESTER MENANG!'; confetti='🤡🎪🤡🎪🤡'; box.classList.add('jester'); } el('winnerEmoji').innerText=emoji; el('winnerTitle').innerText=title; el('winnerConfetti').innerText=confetti; el('winnerMsg').innerText=d.message||''; let players=d.players||lastPlayers||[]; el('winnerListContent').innerHTML=players.map(p=>{ let isWinner=false; if(d.winner==='werewolves' && ['werewolf','alpha'].includes(p.role)) isWinner=true; if(d.winner==='villagers' && !['werewolf','alpha','jester'].includes(p.role)) isWinner=true; if(d.winner==='jester' && p.role==='jester') isWinner=true; let meTag=p.name===myName?' (Kamu)':''; return `<div class="winnerRow ${isWinner?'isWinner':''}"><span class="wAvatar ${avatarClass(p.name)}">${esc(p.name[0].toUpperCase())}</span><span class="wInfo"><b>${esc(p.name)}${meTag}</b><small>${ROLE_EMOJI[p.role]||'❓'} ${ROLE_NAME[p.role]||p.role} • ${p.alive?'❤️ Hidup':'💀 Mati'}${p.lover?` • 💘 Lover: ${esc(p.lover)}`:''}</small></span>${isWinner?'<span class="wBadge" style="background:#facc15;color:#000">🏆 MENANG</span>':''}</div>`; }).join('')||'<div style="text-align:center;color:#b9a5d6">Tidak ada data pemain</div>'; let btn=el('btnWinnerPlayAgain'); btn.disabled=false; btn.innerText='🔄 MAIN LAGI - LANGSUNG MULAI!'; el('winnerModal').classList.add('show'); speak(title+'. '+(d.message||'')); }
+function closeWinnerPopup(){ el('winnerModal').classList.remove('show'); }
+function playAgainFromWinner(){ let btn=el('btnWinnerPlayAgain'); btn.disabled=true; btn.innerText='⏳ Mulai game baru...'; playAgain(); }
+function showAnnouncement(a){ if(!a) return; let banner=el('announceBanner'); banner.className=''; banner.id='announceBanner'; banner.classList.add('show',a.type); el('announceTitle').innerText=a.title; el('announceSub').innerText=a.sub||''; speak(a.title+'. '+(a.sub||'')); setTimeout(()=>{ banner.classList.remove('show'); },8000); let log=el('gameLog'); log.innerHTML=`<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:6px">📢 ${esc(a.title)} - ${esc(a.sub||'')}</div>`+log.innerHTML; }
+socket.on('connect', ()=>{ socketConnected=true; let s=el('connStatus'); s.classList.add('ok'); s.innerText='🟢 Tersambung ke server - siap main!'; setTimeout(()=>{ s.style.display='none'; },2500); });
+socket.on('disconnect', ()=>{ socketConnected=false; let s=el('connStatus'); s.style.display='block'; s.classList.remove('ok'); s.innerText='🔴 Putus dari server!'; });
+function createRoom(){ myName=el('nameInput').value.trim(); if(!myName){ showHomeError('Isi nama dulu!'); return; } if(!socketConnected){ showHomeError('Belum nyambung ke server!'); return; } let b=el('btnCreate'); b.disabled=true; b.innerText='⏳ Bikin Desa...'; socket.emit('createRoom',{name:myName}); setTimeout(()=>{ b.disabled=false; b.innerText='🏠 BUAT DESA'; },3000); }
+function joinRoom(){ myName=el('nameInput').value.trim(); let code=el('codeInput').value.trim(); if(!myName||!code){ showHomeError('Nama & kode harus diisi!'); return; } socket.emit('joinRoom',{code,name:myName}); }
+function startGame(){ socket.emit('startGame',{code:myCode}); }
+function playAgain(){ if(!myCode) return; socket.emit('playAgain',{code:myCode}); let b=document.getElementById('btnPlayAgain'); if(b){ b.disabled=true; b.innerText='⏳ Mulai game baru...'; } }
+let hostConfig={wolfCount:1,enabledRoles:{villager:true,werewolf:true,seer:true,doctor:true,mayor:false,alpha:false,bodyguard:false,witch:false,cupid:false,jester:false},nightTime:35,dayTime:45};
+function renderRoleToggles(){ const roles={villager:{e:'👨‍🌾',t:'Villager',d:'Warga biasa'},werewolf:{e:'🐺',t:'Werewolf',d:'Wajib aktif'},seer:{e:'🔮',t:'Seer',d:'Intip role'},doctor:{e:'💉',t:'Doctor',d:'Heal - tetap hidup'},mayor:{e:'🎩',t:'Mayor',d:'Vote 2x'},alpha:{e:'👑',t:'Alpha',d:'Bos serigala'},bodyguard:{e:'🛡️',t:'Bodyguard',d:'Tumbal - mati gantiin'},witch:{e:'🧙',t:'Witch',d:'Heal + Racun'},cupid:{e:'💘',t:'Cupid',d:'Jodohin 2 org'},jester:{e:'🤡',t:'Jester',d:'Menang digantung'}}; el('roleToggles').innerHTML=Object.entries(roles).map(([k,v])=>`<div class="roleChip ${hostConfig.enabledRoles[k]?'on':''} ${k==='werewolf'?'disabled':''}" onclick="toggleRole('${k}')"><div class="check">${hostConfig.enabledRoles[k]?'✓':''}</div><div><b>${v.e} ${v.t}</b><small>${v.d}</small></div></div>`).join(''); }
+function toggleRole(r){ if(r==='werewolf') return; hostConfig.enabledRoles[r]=!hostConfig.enabledRoles[r]; updateHostConfig(); }
+function updateHostConfig(){ hostConfig.wolfCount=parseInt(el('wolfCount').value); hostConfig.nightTime=parseInt(el('nightTime').value); hostConfig.dayTime=parseInt(el('dayTime').value); el('wolfCountLabel').innerText=hostConfig.wolfCount+' 🐺'; renderRoleToggles(); socket.emit('updateConfig',{code:myCode,config:hostConfig}); }
+function sendChatAll(){ let m=el('chatAllInput').value.trim(); if(!m) return; if(currentPhase!=='day'){ alert('Chat tuduhan cuma bisa siang!'); return; } socket.emit('chatAll',{code:myCode,msg:m}); el('chatAllInput').value=''; }
+function quickAccuse(t){ socket.emit('chatAll',{code:myCode,msg:t}); }
+function showChatAll(show){ el('chatAllCard').style.display=show?'block':'none'; if(!show) el('chatAllList').innerHTML='<div style="text-align:center;color:#b9a5d6;background:transparent">Belum ada tuduhan... Ayo mulai nuduh! 👇</div>'; }
+document.addEventListener('DOMContentLoaded', ()=>{ el('chatAllInput')?.addEventListener('keydown',e=>{ if(e.key==='Enter') sendChatAll(); }); el('wolfChatInput')?.addEventListener('keydown',e=>{ if(e.key==='Enter') sendWolfChat(); }); });
+function renderVoteTally(votes){ let wrap=el('voteTallyWrap'); if(!votes||Object.keys(votes).length===0){ wrap.innerHTML=`<div style="font-size:11px;color:#b9a5d6;text-align:center;padding:10px">Belum ada vote masuk...<br>Klik nama di atas buat vote!</div>`; return; } let tally={}; Object.entries(votes).forEach(([voter,v])=>{ if(!tally[v.target]) tally[v.target]={total:0,voters:[]}; tally[v.target].total+=v.weight; tally[v.target].voters.push(voter+(v.weight>1?' (x2 Mayor)':'')); }); let sorted=Object.entries(tally).sort((a,b)=>b[1].total-a[1].total); let maxVote=sorted[0][1].total; let totalVoted=Object.keys(votes).length; let aliveCount=lastPlayers.filter(p=>p.alive).length||totalVoted; wrap.innerHTML=`<div class="voteProgress">🗳️ ${totalVoted} / ${aliveCount} warga sudah vote</div><div style="font-family:Cinzel;font-size:12px;margin-bottom:8px">📊 JUMLAH VOTING SAAT INI:</div>`+sorted.map(([target,d],idx)=>{ let pct=Math.round(d.total/maxVote*100); let isLeader=idx===0; return `<div class="voteTallyItem ${isLeader?'leader':''}"><div class="voteTallyTop"><b>${isLeader?'👑 ':''}${esc(target)}</b><span>${d.total} vote</span></div><div class="voteBarBg"><div class="voteBarFill" style="width:${pct}%"></div></div><div class="voteVoters">Di-vote oleh: ${d.voters.map(esc).join(', ')}</div></div>`; }).join(''); }
+socket.on('chatAllMsg', d=>{ let l=el('chatAllList'); if(l.innerHTML.includes('Belum ada tuduhan')) l.innerHTML=''; l.innerHTML+=`<div><b>${esc(d.name)}</b><small>${esc(d.time)}</small><br>${esc(d.msg)}</div>`; l.scrollTop=l.scrollHeight; });
+socket.on('roomCreated', d=>{ myCode=d.code; hostConfig=d.config; el('homeScreen').style.display='none'; el('lobbyScreen').style.display='block'; el('gameScreen').style.display='none'; el('roomCodeBig').innerText=d.code; el('startBtn').style.display='block'; el('hostPanel').style.display='block'; renderRoleToggles(); el('wolfCount').value=hostConfig.wolfCount; el('wolfCountLabel').innerText=hostConfig.wolfCount+' 🐺'; el('nightTime').value=hostConfig.nightTime; el('dayTime').value=hostConfig.dayTime; updateAdPanels(); showVoiceBar(); });
+socket.on('joinedRoom', d=>{ myCode=d.code; el('homeScreen').style.display='none'; el('lobbyScreen').style.display='block'; el('roomCodeBig').innerText=d.code; updateAdPanels(); showVoiceBar(); });
+socket.on('configUpdated', cfg=>{ hostConfig=cfg; renderRoleToggles(); });
+socket.on('backToLobby', d=>{ myCode=d.code; el('winnerModal').classList.remove('show'); el('gameScreen').style.display='none'; el('lobbyScreen').style.display='block'; el('homeScreen').style.display='none'; el('roomCodeBig').innerText=myCode; showChatAll(false); updateAdPanels(); alert('🔄 Balik ke lobby! Tunggu host klik MAIN LAGI...'); });
+socket.on('playAgainReady', d=>{ myCode=d.code; el('winnerModal').classList.remove('show'); el('gameScreen').style.display='none'; el('lobbyScreen').style.display='block'; el('homeScreen').style.display='none'; el('roomCodeBig').innerText=myCode; showChatAll(false); el('loverInfo').innerHTML=''; el('roleCardWrap').innerHTML=''; el('wolfCave').style.display='none'; updateAdPanels(); });
+socket.on('updateLobby', room=>{ myCode=room.code; el('roomCodeBig').innerText=room.code; isHostNow=room.hostId===socket.id; updateAdPanels(); el('lobbyCount').innerText=`(${room.players.length} orang)`; el('playerList').innerHTML=room.players.map(p=>`<div class="player ${p.id===socket.id?'me':''}"><div class="avatar ${avatarClass(p.name)}">${esc(p.name[0].toUpperCase())}</div><div class="playerName"><b>${esc(p.name)} ${p.id===socket.id?'(Kamu)':''}</b><small>${p.id===room.hostId?'👑 Host Desa':'Warga Desa'}</small></div>${p.id===room.hostId?'<span class="hostBadge">👑 HOST</span>':''}<span class="dot ${p.alive?'':'off'}"></span>${isHostNow && p.id!==socket.id?`<button class="btn btn-danger btn-small" onclick="kickPlayer('${p.id}','${esc(p.name)}')">👢 Kick</button>`:''}</div>`).join(''); if(isHostNow){ el('startBtn').style.display='block'; el('hostPanel').style.display='block'; if(room.config) hostConfig=room.config; renderRoleToggles(); el('wolfCount').value=hostConfig.wolfCount; el('wolfCountLabel').innerText=hostConfig.wolfCount+' 🐺'; el('nightTime').value=hostConfig.nightTime; el('dayTime').value=hostConfig.dayTime; } else { el('hostPanel').style.display='none'; if(room.config) hostConfig=room.config; } });
+socket.on('kicked', d=>{ alert('👢 '+d.message); location.reload(); });
+function kickPlayer(id,name){ if(!confirm('Kick '+name+'?')) return; socket.emit('kickPlayer',{code:myCode,targetId:id}); }
+socket.on('playerKicked', d=>{ updateLog(d.log); renderPlayers(d.players); showNarration(`👢 ${d.kickedName} di-kick HOST!`); });
+socket.on('hostChanged', d=>{ alert(`👑 Host baru: ${d.newHost}`); });
+socket.on('roleAssigned', d=>{ myRole=d.role; myRoleData=d.roleData; lastPlayers=d.allPlayers||[]; el('winnerModal').classList.remove('show'); el('lobbyScreen').style.display='none'; el('gameScreen').style.display='block'; updateAdPanels(); showVoiceBar(); const r=d.roleData||{emoji:'❓',name:d.role.toUpperCase(),desc:'',color:'#6d4aff'}; el('roleCardWrap').innerHTML=`<div class="roleCard" id="roleCard" onclick="this.classList.toggle('flipped')"><div class="roleInner"><div class="roleFront"><div style="font-size:10px">KETUK BUKA</div><div style="font-size:56px;margin:12px 0">🃏</div><div style="font-family:Cinzel">KARTU TAKDIR</div></div><div class="roleBack" style="border-color:${r.color}"><div style="font-size:54px">${r.emoji}</div><div style="font-family:Cinzel;font-size:20px;color:${r.color};margin-top:8px">${esc(r.name)}</div><div style="font-size:12px;margin-top:8px;color:#d8c8f0">${esc(r.desc)}</div><button class="btn btn-dark btn-small" style="margin-top:10px" onclick="event.stopPropagation();openRules()">📜 LIHAT TUGAS & MENANG</button></div></div></div>`; if(d.lovers && d.lovers.includes(myName)){ let o=d.lovers.find(n=>n!==myName); el('loverInfo').innerHTML=`💘 LOVER dengan <b>${esc(o)}</b> - mati bareng!`; } else el('loverInfo').innerHTML=''; setTimeout(()=>{ el('roleCard')?.classList.add('flipped'); },600); if(['werewolf','alpha'].includes(d.role)) el('wolfCave').style.display='block'; else el('wolfCave').style.display='none'; renderPlayers(d.allPlayers||[]); });
+socket.on('gameStarted', d=>{ currentPhase='night'; showChatAll(false); el('announceBanner').classList.remove('show'); showNarration(d.narration); setPhase('night'); playSound('howl'); updateAdPanels(); applyVoicePhase(); });
+socket.on('dayStarted', d=>{ currentPhase='day'; showChatAll(true); if(d.announcement) showAnnouncement(d.announcement); if(d.killCam) showKillCam(d.killCam); showNarration(d.narration); renderPlayers(d.players); renderVote(d.players); updateLog(d.log); setPhase('day'); applyVoicePhase(); });
+socket.on('nightStarted', d=>{ currentPhase='night'; showChatAll(false); el('announceBanner').classList.remove('show'); showNarration(d.narration); renderPlayers(d.players); renderNightAction(d.players); updateLog(d.log); setPhase('night'); applyVoicePhase(); });
+socket.on('seerResult', d=>{ alert(`🔮 SEER: ${d.target} adalah ${d.isWerewolf?'🐺 WEREWOLF!':'✅ BUKAN werewolf ('+d.role+')'}`); });
+socket.on('gameOver', d=>{ currentPhase='ended'; showChatAll(false); showNarration(d.message); renderPlayers(d.players); el('actionArea').innerHTML=`<button id="btnPlayAgain" class="btn btn-primary" onclick="playAgain()">🔄 MAIN LAGI - LANGSUNG MULAI!</button><div style="font-size:11px;color:#b9a5d6;text-align:center;margin-top:8px">Tanpa input nama & kode lagi • Room tetap sama</div>`; el('voteArea').innerHTML=''; el('voteTallyWrap').innerHTML=''; setTimeout(()=>{ showWinnerPopup(d); }, 600); });
+socket.on('voteUpdate', votes=>{ renderVoteTally(votes); });
+socket.on('werewolfChatMsg', d=>{ el('wolfChatList').innerHTML=d.chat.map(c=>`<div><b style="color:#ff6a6a">${esc(c.name)}:</b> ${esc(c.msg)}</div>`).join(''); });
+socket.on('errorMsg', m=>{ showHomeError(m); alert(m); });
+socket.on('witchDone', d=>{ alert(d.action==='heal'?'🧙 Heal dipakai!':'🧪 Poison dipakai!'); });
+socket.on('cupidPrompt', d=>{ let pilih=prompt('💘 CUPID! Pilih 2 lovers (pisahin koma). Pemain: '+d.players.join(', ')+'\nContoh: Budi,Andi'); if(!pilih) return; let [l1,l2]=pilih.split(',').map(s=>s.trim()); socket.emit('cupidChoice',{code:myCode,lover1:l1,lover2:l2}); });
+socket.on('cupidDone', d=>{ alert(`💘 Kamu udah jodohin ${d.lover1} & ${d.lover2}!`); });
+function showNarration(text){ if(!text) return; lastNarration=text; let box=el('narrationBox'); box.innerHTML=''; let i=0; box.dataset.run=(parseInt(box.dataset.run||0)+1); let myRun=box.dataset.run; (function type(){ if(String(myRun)!==String(box.dataset.run)) return; if(i<text.length){ box.innerHTML=esc(text.substring(0,i+1)); i++; setTimeout(type,14); } else box.innerHTML=esc(text); })(); speak(text); }
+function speak(t){ if(!('speechSynthesis' in window)) return; try{ speechSynthesis.cancel(); let u=new SpeechSynthesisUtterance(String(t).replace(/[^a-zA-Z0-9 .,!?]/g,' ')); u.lang='id-ID'; u.rate=0.85; u.pitch=0.7; speechSynthesis.speak(u); }catch(e){} }
+function speakLast(){ if(lastNarration) speak(lastNarration); }
+function playSound(id){ let a=el(id); if(a&&musicOn){ a.volume=0.35; a.play().catch(()=>{}); } }
+function toggleMusic(){ musicOn=!musicOn; let bgm=el('bgm'); el('musicCtrl').innerText=musicOn?'🔊 MUSIK ON':'🔇 MUSIK OFF'; if(musicOn) bgm.play().catch(()=>{}); else bgm.pause(); }
+function renderPlayers(players){ lastPlayers=players; el('playersGame').innerHTML=players.map(p=>`<div class="player ${p.name===myName?'me':''} ${p.alive?'':'dead'}"><div class="avatar ${avatarClass(p.name)}">${esc(p.name[0].toUpperCase())}</div><div class="playerName"><b>${esc(p.name)}</b><small>${p.lover?`💘 Lover: ${esc(p.lover)}`:p.alive?'Masih hidup':'Sudah mati'}</small></div><span>${p.alive?'❤️':'💀'}</span></div>`).join(''); el('aliveCount').innerText=`(${players.filter(p=>p.alive).length} hidup)`; }
+function renderVote(players){ let alive=players.filter(p=>p.alive); el('voteArea').innerHTML=`<div style="font-family:Cinzel;margin-bottom:8px;font-size:13px">🗳️ VOTE GANTUNG<br><span style="font-size:11px;font-family:Poppins;color:#b9a5d6">Klik nama buat vote gantung - Mayor 2x</span></div>`+alive.map(p=>`<button class="actionBtn voteBtn" onclick="vote('${esc(p.name)}')"><span class="aAvatar ${avatarClass(p.name)}">${esc(p.name[0].toUpperCase())}</span><span class="aName">${esc(p.name)} ${p.name===myName?'(Kamu)':''}</span><span class="aBadge">🗳️ Vote</span></button>`).join(''); el('actionArea').innerHTML=''; el('voteTallyWrap').innerHTML=`<div style="font-size:11px;color:#b9a5d6;text-align:center;padding:10px">Belum ada vote masuk...</div>`; }
+function renderNightAction(players){ let alive=players.filter(p=>p.alive&&p.name!==myName); let isNight=['werewolf','alpha','seer','doctor','bodyguard','witch'].includes(myRole); let meAlive=players.find(p=>p.name===myName)?.alive; el('voteArea').innerHTML=''; el('voteTallyWrap').innerHTML=''; if(isNight&&meAlive){ let labelMap={werewolf:'🐺 PILIH MANGSA - Klik nama buat BUNUH',alpha:'👑 ALPHA - PILIH MANGSA (Vote kamu 2x)',seer:'🔮 INTIP SIAPA? - Klik nama buat INTIP',doctor:'💉 DOCTOR - HEAL SIAPA? (Boleh diri sendiri, kamu gak mati)',bodyguard:'🛡️ BODYGUARD - TUMBAL BUAT SIAPA? (Kamu MATI kalau dia diserang!)',witch:'🧙 WITCH - PILIH TARGET (Heal / Poison)'}; let label=labelMap[myRole]||'PILIH'; let list=myRole==='doctor'?players.filter(p=>p.alive):alive; let btnClass=(myRole==='werewolf'||myRole==='alpha')?'wolf':''; let btnText=(myRole==='werewolf'||myRole==='alpha')?'🐺 Bunuh':(myRole==='seer'?'🔮 Intip':(myRole==='doctor'?'💉 Heal':(myRole==='bodyguard'?'🛡️ Jaga':'🧙 Pilih'))); el('actionArea').innerHTML=`<div style="font-family:Cinzel;margin-bottom:8px;font-size:13px">${label}</div>`+list.map(p=>`<button class="actionBtn ${btnClass}" onclick="nightAct('${esc(p.name)}')"><span class="aAvatar ${avatarClass(p.name)}">${esc(p.name[0].toUpperCase())}</span><span class="aName">${esc(p.name)} ${p.name===myName?'(Kamu)':''}</span><span class="aBadge">${btnText}</span></button>`).join('')+(myRole==='witch'?`<div style="display:flex;gap:8px;margin-top:10px"><button class="btn" style="flex:1;background:#22c55e;color:#000" onclick="witchUse('heal')">💚 Heal</button><button class="btn btn-danger" style="flex:1" onclick="witchUse('poison')">🧪 Poison</button></div>`:'' ); } else { el('actionArea').innerHTML=`<div style="text-align:center;color:#b9a5d6;padding:10px">😴 Tidur... tunggu pagi<br><span style="font-size:11px">Kamu gak ada aksi malam ini</span></div>`; } }
+function vote(n){ socket.emit('vote',{code:myCode,targetName:n}); el('voteArea').innerHTML=`<div style="text-align:center;padding:14px">Kamu vote <b>${esc(n)}</b>...<br><span style="font-size:11px;color:#b9a5d6">Menunggu yang lain... Lihat jumlah voting di bawah 👇</span></div>`; }
+function nightAct(n){ socket.emit('nightAction',{code:myCode,targetName:n}); if(myRole==='witch'){ window._witchTarget=n; el('actionArea').innerHTML=`<div style="text-align:center">Witch pilih <b>${esc(n)}</b>... klik Heal / Poison.</div><div style="display:flex;gap:8px;margin-top:10px"><button class="btn" style="flex:1;background:#22c55e;color:#000" onclick="witchUse('heal')">💚 Heal</button><button class="btn btn-danger" style="flex:1" onclick="witchUse('poison')">🧪 Poison</button></div>`; } else { let txt=(myRole==='werewolf'||myRole==='alpha')?'bunuh':'pilih'; el('actionArea').innerHTML=`<div style="text-align:center;padding:14px">Kamu ${txt} <b>${esc(n)}</b>...<br><span style="font-size:11px;color:#b9a5d6">Menunggu yang lain...</span></div>`; } }
+function witchUse(a){ let t=window._witchTarget; if(!t) return alert('Pilih orang dulu!'); socket.emit('witchAction',{code:myCode,action:a,targetName:t}); }
+function updateLog(log){ el('gameLog').innerHTML=log.map(l=>`<div>• ${esc(l)}</div>`).join(''); }
+function setPhase(p){ currentPhase=p; if(p==='night'){ el('moonBig').style.display='block'; el('sunBig').style.display='none'; el('phasePill').innerText='🌙 Berburu'; } else { el('moonBig').style.display='none'; el('sunBig').style.display='block'; el('phasePill').innerText='☀️ Diskusi'; } }
+function sendWolfChat(){ let m=el('wolfChatInput').value.trim(); if(!m) return; socket.emit('werewolfChat',{code:myCode,msg:m}); el('wolfChatInput').value=''; }
+function showKillCam(d){ el('killCam').classList.add('show'); el('killCamText').innerText=`${d.victim} DIMANGSA!`; el('killCamSub').innerText=`Role: ${d.role}`; playSound('scream'); setTimeout(()=>closeKillCam(),3500); }
+function closeKillCam(){ el('killCam').classList.remove('show'); }
+function drawAnalogClock(s,total){ const c=el('analogClock'); if(!c) return; const ctx=c.getContext('2d'); ctx.clearRect(0,0,110,110); ctx.save(); ctx.translate(55,55); ctx.beginPath(); ctx.arc(0,0,50,0,2*Math.PI); ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=2; ctx.stroke(); for(let i=0;i<12;i++){ ctx.rotate(Math.PI/6); ctx.beginPath(); ctx.moveTo(0,-46); ctx.lineTo(0,-50); ctx.strokeStyle='#a855f7'; ctx.lineWidth=i%3===0?2:1; ctx.stroke(); } ctx.rotate(-(12*Math.PI/6)); let ang=((total-s)/total)*2*Math.PI-Math.PI/2; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(48*Math.cos(ang),48*Math.sin(ang)); ctx.strokeStyle=s<10?'#ff2a2a':'#ec4899'; ctx.lineWidth=3; ctx.stroke(); ctx.beginPath(); ctx.arc(0,0,4,0,2*Math.PI); ctx.fillStyle='#fff'; ctx.fill(); ctx.restore(); }
+socket.on('timer', d=>{ el('timerPhase').innerText=d.type==='night'?'🌙 MALAM - WEREWOLF BERBURU':'☀️ SIANG - VOTE GANTUNG'; el('timerDigital').innerText=d.timeLeft; el('timerFill').style.width='100%'; drawAnalogClock(d.timeLeft,d.total); });
+socket.on('timerTick', d=>{ el('timerDigital').innerText=d.timeLeft; let total=d.type==='night'?hostConfig.nightTime:hostConfig.dayTime; el('timerFill').style.width=(d.timeLeft/total*100)+'%'; drawAnalogClock(d.timeLeft,total); });
+window.onload=()=>{ let bgm=el('bgm'); bgm.volume=0.12; bgm.play().catch(()=>{ musicOn=false; el('musicCtrl').innerText='🔇 MUSIK OFF'; }); };
+</script>
+</body>
+</html>

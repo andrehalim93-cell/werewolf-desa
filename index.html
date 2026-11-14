@@ -314,7 +314,7 @@ input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;b
 </div>
 </div>
 </div>
-<div id="sceneModal"><div class="sceneBox" id="sceneBox"><img id="sceneImg" src="" alt="Scene"><div class="sceneOverlay"><div id="sceneEmoji" style="font-size:64px">🐺</div><div id="sceneTitle" class="sceneTitle">...</div><div id="sceneSub" class="sceneSub">...</div><button class="btn btn-dark" style="margin-top:14px;width:auto;padding:11px 22px" onclick="closeScene()">Lanjut ➡️</button><div style="font-size:10px;color:#ccc;margin-top:6px">Otomatis nutup 5 detik</div></div></div></div>
+<div id="sceneModal"><div class="sceneBox" id="sceneBox"><img id="sceneImg" src="" alt="Scene"><div class="sceneOverlay"><div id="sceneEmoji" style="font-size:64px">🐺</div><div id="sceneTitle" class="sceneTitle">...</div><div id="sceneSub" class="sceneSub">...</div><button class="btn btn-dark" style="margin-top:14px;width:auto;padding:11px 22px" onclick="closeScene()">Lanjut ➡️</button><div id="sceneAutoText" style="font-size:11px;color:#facc15;margin-top:6px;font-weight:700">Otomatis nutup 3 detik...</div></div></div></div>
 <div id="killCam"><div style="font-size:60px">🐺</div><div id="killCamText"></div><div id="killCamSub" style="color:#ccc"></div><button class="btn btn-dark" style="margin-top:16px;width:auto;padding:12px 24px" onclick="closeKillCam()">Tutup</button></div>
 <div id="voiceBar" style="display:none">
   <div class="vInfo"><b id="voiceStatus">🎤 Voice OFF</b><small id="voiceSub">Klik NYALAIN buat ngobrol suara</small></div>
@@ -574,15 +574,36 @@ function playSceneSound(type){
     }
   }catch(e){}
 }
+let sceneTimer = null;
+let sceneCountdown = null;
 function showScene(type, title, sub, mood){
   let s = SCENES[type] || SCENES.kill;
   let box = el('sceneBox'); box.className='sceneBox '+s.cls;
   el('sceneImg').src = s.img; el('sceneEmoji').innerText = s.emoji;
   el('sceneTitle').innerText = title; el('sceneSub').innerText = sub || '';
   el('sceneModal').classList.add('show');
-  clearTimeout(sceneTimer); sceneTimer = setTimeout(()=>closeScene(), 5000);
+  // MATIIN TIMER LAMA DULU
+  if(sceneTimer) clearTimeout(sceneTimer);
+  if(sceneCountdown) clearInterval(sceneCountdown);
+  // COUNTDOWN 3...2...1 JALAN BENERAN
+  let left = 3;
+  let countEl = el('sceneAutoText');
+  if(countEl) countEl.innerText = 'Otomatis nutup ' + left + ' detik...';
+  sceneCountdown = setInterval(()=>{
+    left--;
+    if(countEl) countEl.innerText = left > 0 ? 'Otomatis nutup ' + left + ' detik...' : 'Menutup...';
+    if(left <= 0) clearInterval(sceneCountdown);
+  }, 1000);
+  // NUTUP BENERAN SETELAH 3 DETIK
+  sceneTimer = setTimeout(()=>closeScene(), 3000);
   try{ playSceneSound(s.sound); }catch(e){}
   try{ speak(title+'. '+(sub||''), mood || 'marah'); }catch(e){}
+}
+function closeScene(){
+  if(sceneTimer) clearTimeout(sceneTimer);
+  if(sceneCountdown) clearInterval(sceneCountdown);
+  sceneTimer = null; sceneCountdown = null;
+  el('sceneModal').classList.remove('show');
 }
 function closeScene(){ el('sceneModal').classList.remove('show'); clearTimeout(sceneTimer); }
 function drawAnalogClock(s,total){ const c=el('analogClock'); if(!c) return; const ctx=c.getContext('2d'); ctx.clearRect(0,0,110,110); ctx.save(); ctx.translate(55,55); ctx.beginPath(); ctx.arc(0,0,50,0,2*Math.PI); ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=2; ctx.stroke(); for(let i=0;i<12;i++){ ctx.rotate(Math.PI/6); ctx.beginPath(); ctx.moveTo(0,-46); ctx.lineTo(0,-50); ctx.strokeStyle='#a855f7'; ctx.lineWidth=i%3===0?2:1; ctx.stroke(); } ctx.rotate(-(12*Math.PI/6)); let ang=((total-s)/total)*2*Math.PI-Math.PI/2; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(48*Math.cos(ang),48*Math.sin(ang)); ctx.strokeStyle=s<10?'#ff2a2a':'#ec4899'; ctx.lineWidth=3; ctx.stroke(); ctx.beginPath(); ctx.arc(0,0,4,0,2*Math.PI); ctx.fillStyle='#fff'; ctx.fill(); ctx.restore(); }

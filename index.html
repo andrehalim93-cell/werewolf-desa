@@ -175,7 +175,7 @@ input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;b
 <div id="adModal"><div class="adBox"><div class="adTop"><span>📢 IKLAN • DARI HOST</span><span id="adCountdown">5 detik</span></div><img id="adImage" src="" alt="Iklan"><div class="adCaption" id="adCaption"></div><div class="adProgress"><div id="adProgressFill"></div></div><div class="adBtnRow"><button class="btn btn-dark" style="padding:11px" onclick="closeAd()">✕ Tutup Iklan</button></div></div></div>
 <div id="winnerModal"><div class="winnerBox" id="winnerBox"><div class="confetti" id="winnerConfetti">🎉🎊🎉🎊🎉</div><div class="winnerEmoji" id="winnerEmoji">🐺</div><div class="winnerTitle" id="winnerTitle">WEREWOLF MENANG!</div><div class="winnerMsg" id="winnerMsg">...</div><div class="winnerList"><div class="winnerListTitle">📜 DAFTAR ROLE SEMUA PEMAIN</div><div id="winnerListContent"></div></div><button id="btnWinnerPlayAgain" class="btn btn-primary" style="padding:16px;font-size:15px" onclick="playAgainFromWinner()">🔄 MAIN LAGI - LANGSUNG MULAI!</button><div style="font-size:11px;color:#b9a5d6;margin-top:8px">Tanpa input nama & kode lagi • Room tetap sama</div><button class="btn btn-dark" style="margin-top:10px" onclick="closeWinnerPopup()">👀 LIHAT PAPAN GAME DULU</button></div></div>
 <div class="wrap">
-<div class="topBrand"><div class="logo">🐺</div><h1>DESA TERKUTUK</h1><p>SIAPA SERIGALA DI ANTARA KITA?</p><div style="margin-top:8px"><span class="pill">🎙️ Narator Mbah Kromo</span> <span class="pill">✨ V10 ONLINE FIX VOICE</span></div></div>
+<div class="topBrand"><div class="logo">🐺</div><h1>DESA TERKUTUK</h1><p>SIAPA SERIGALA DI ANTARA KITA?</p><div style="margin-top:8px"><span class="pill">🎙️ Narator Mbah Kromo</span> <span class="pill">✨ V10</span></div></div>
 <div id="connStatus">🔴 Belum nyambung ke server... tunggu / cek node server.js</div>
 <div id="homeScreen"><div class="homeWrap"><div class="card"><div style="text-align:center;font-size:12px;color:#d8c8f0;margin-bottom:12px">Masukin nama kamu dulu...</div><input type="text" id="nameInput" placeholder="Nama kamu..." maxlength="15" autocomplete="off"><input type="text" id="codeInput" placeholder="Kode Desa" maxlength="4" style="text-transform:uppercase" autocomplete="off"><div class="row2"><button class="btn btn-primary" id="btnCreate" onclick="createRoom()">🏠 BUAT DESA</button><button class="btn btn-dark" id="btnJoin" onclick="joinRoom()">🚪 GABUNG</button></div><div id="homeError" style="display:none;color:#ff6a6a;font-size:12px;text-align:center;margin-top:10px"></div><button class="btn btn-dark" style="margin-top:10px" onclick="openRules()">📜 LIHAT RULES DULU</button></div></div></div>
 <div id="lobbyScreen" style="display:none"><div class="lobbyWrap"><div class="card" style="text-align:center"><div style="font-size:11px;letter-spacing:2px;color:#b9a5d6">KODE DESA KAMU</div><div class="codeBig" id="roomCodeBig">----</div><button class="btn btn-dark btn-small" style="margin-top:8px" onclick="copyCode()">📋 Salin Kode</button></div><div class="card"><div class="cardTitle">👥 WARGA DESA <span id="lobbyCount"></span></div><div id="playerList"></div></div>
@@ -387,8 +387,29 @@ function applyVoicePhase(){
   if(currentPhase === 'night'){ setVoiceMuted(true); el('voiceSub').innerText = '🌙 Malam hari - Voice auto-mute biar gak ketauan role!'; }
 }
 function toggleAdMini(where){ let body=el('adMiniBody'+where); let btn=el('adToggle'+where); let isOpen=body.classList.contains('open'); if(isOpen){ body.classList.remove('open'); btn.innerText='+ Buka'; } else { body.classList.add('open'); btn.innerText='- Tutup'; } }
-function updateAdPanels(){ let show=isHostNow; el('adPanelLobby').style.display=show?'block':'none'; el('adPanelGame').style.display=(show && el('gameScreen').style.display!=='none')?'block':'none'; }
-function onAdFile(input, previewId){ let file=input.files && input.files[0]; if(!file) return; if(!file.type.startsWith('image/')) return alert('Pilih file gambar ya! (JPG / PNG)'); if(file.size>1000000) return alert('Gambar kebesaran! Max 1MB.'); let reader=new FileReader(); reader.onload=e=>{ pendingAdImage=e.target.result; let img=el(previewId); img.src=pendingAdImage; img.style.display='block'; }; reader.readAsDataURL(file); }
+function onAdFile(input, previewId){
+  let file = input.files && input.files[0]; if(!file) return;
+  if(!file.type.startsWith('image/')) return alert('Pilih file gambar ya! (JPG / PNG)');
+  let reader = new FileReader();
+  reader.onload = e => {
+    let img = new Image();
+    img.onload = () => {
+      // KOMPRES OTOMATIS: max lebar 800px, kualitas 0.7
+      let canvas = document.createElement('canvas');
+      let scale = Math.min(1, 800 / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      let ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      pendingAdImage = canvas.toDataURL('image/jpeg', 0.7); // dari 2MB jadi ~150KB
+      console.log('Iklan dikompres jadi: ' + Math.round(pendingAdImage.length/1024) + ' KB');
+      let prev = el(previewId); prev.src = pendingAdImage; prev.style.display = 'block';
+      alert('✅ Gambar dikompres jadi ' + Math.round(pendingAdImage.length/1024) + ' KB, aman buat dikirim!');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
 function sendAd(where){ if(!isHostNow) return alert('⛔ Cuma HOST yang bisa kirim iklan!'); if(!pendingAdImage) return alert('Pilih gambar iklan dulu! Klik 📁 PILIH GAMBAR IKLAN'); let dur=parseInt(el('adDuration'+where).value)||5; let cap=el('adCaption'+where).value.trim(); socket.emit('sendAd',{code:myCode,image:pendingAdImage,duration:dur,caption:cap}); }
 function clearAd(where){ pendingAdImage=null; el('adPreview'+where).style.display='none'; el('adPreview'+where).src=''; el('adFile'+where).value=''; el('adCaption'+where).value=''; }
 function showAd(d){ clearInterval(adTimerInt); el('adImage').src=d.image; el('adCaption').innerText=d.caption?d.caption+`  •  dari ${d.from}`:`Iklan dari ${d.from}`; let left=d.duration; el('adCountdown').innerText=left+' detik'; el('adProgressFill').style.width='100%'; el('adModal').classList.add('show'); adTimerInt=setInterval(()=>{ left--; if(left<=0){ closeAd(); return; } el('adCountdown').innerText=left+' detik'; el('adProgressFill').style.width=(left/d.duration*100)+'%'; },1000); }

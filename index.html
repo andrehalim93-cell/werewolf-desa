@@ -462,7 +462,7 @@ socket.on('nightStarted', d=>{ currentPhase='night'; showChatAll(false); el('ann
 socket.on('seerResult', d=>{ alert(`🔮 SEER: ${d.target} adalah ${d.isWerewolf?'🐺 WEREWOLF!':'✅ BUKAN werewolf ('+d.role+')'}`); });
 socket.on('gameOver', d=>{ currentPhase='ended'; showChatAll(false); showNarration(d.message); renderPlayers(d.players); el('actionArea').innerHTML=`<button id="btnPlayAgain" class="btn btn-primary" onclick="playAgain()">🔄 MAIN LAGI - LANGSUNG MULAI!</button><div style="font-size:11px;color:#b9a5d6;text-align:center;margin-top:8px">Tanpa input nama & kode lagi • Room tetap sama</div>`; el('voteArea').innerHTML=''; el('voteTallyWrap').innerHTML=''; setTimeout(()=>{ showWinnerPopup(d); }, 600); });
 socket.on('voteUpdate', votes=>{ renderVoteTally(votes); });
-socket.on('werewolfChatMsg', d=>{ el('wolfChatList').innerHTML=d.chat.map(c=>`<div><b style="color:#ff6a6a">${esc(c.name)}:</b> ${esc(c.msg)}</div>`).join(''); });
+socket.on('werewolfChatMsg', d=>{ let list=el('wolfChatList'); list.innerHTML=d.chat.map(c=>`<div class="wolfMsg ${c.name===myName?'me':''}"><b>${c.name===myName?'Kamu 🐺':esc(c.name)+' 🐺'}</b>${esc(c.msg)}</div>`).join(''); list.scrollTop=list.scrollHeight; });
 socket.on('errorMsg', m=>{ showHomeError(m); alert(m); });
 socket.on('witchDone', d=>{ alert(d.action==='heal'?'🧙 Heal dipakai!':'🧪 Poison dipakai!'); });
 socket.on('cupidPrompt', d=>{ let pilih=prompt('💘 CUPID! Pilih 2 lovers (pisahin koma). Pemain: '+d.players.join(', ')+'\nContoh: Budi,Andi'); if(!pilih) return; let [l1,l2]=pilih.split(',').map(s=>s.trim()); socket.emit('cupidChoice',{code:myCode,lover1:l1,lover2:l2}); });

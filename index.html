@@ -243,6 +243,17 @@ input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;b
   text-align:center; font-size:10.5px; color:#9a8a75;
   margin-top:8px; line-height:1.5;
 }
+#sceneModal{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:350;display:none;align-items:center;justify-content:center;padding:12px}
+#sceneModal.show{display:flex}
+.sceneBox{width:100%;max-width:480px;border-radius:22px;overflow:hidden;border:3px solid #a855f7;position:relative;animation:winnerPop .4s ease;box-shadow:0 0 40px rgba(168,85,247,.5)}
+.sceneBox.kill{border-color:#ef4444;box-shadow:0 0 40px rgba(239,68,68,.6)}
+.sceneBox.lynch{border-color:#f59e0b;box-shadow:0 0 40px rgba(245,158,11,.6)}
+.sceneBox.saved{border-color:#22c55e;box-shadow:0 0 40px rgba(34,197,94,.6)}
+.sceneBox.win{border-color:#facc15;box-shadow:0 0 40px rgba(250,204,21,.6)}
+#sceneImg{width:100%;height:320px;object-fit:cover;display:block;filter:brightness(.75)}
+.sceneOverlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:20px 16px 16px;background:linear-gradient(to top, rgba(0,0,0,.95) 0%, rgba(0,0,0,.4) 55%, transparent 100%);text-align:center}
+.sceneTitle{font-family:'Cinzel',serif;font-size:24px;margin:8px 0 6px;text-shadow:0 2px 10px #000}
+.sceneSub{font-size:13px;color:#ddd;line-height:1.6}
 </style>
 </head>
 <body>
@@ -250,7 +261,7 @@ input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;b
 <button id="rulesBtn" onclick="openRules()">📜 RULES</button>
 <div id="rulesModal" onclick="if(event.target===this) closeRules()"><div class="rulesBox"><div style="display:flex;justify-content:space-between;align-items:center"><h3 id="rulesTitle">📜 RULES & TUGAS KAMU</h3><button class="btn btn-dark btn-small" onclick="closeRules()">✕ Tutup</button></div><div id="rulesContent"></div><div style="margin-top:12px;font-size:11px;color:#b9a5d6;text-align:center">Siang = Chat + Voice + Vote Gantung • Malam = Role malam beraksi • Yang mati gak bisa chat / voice</div></div></div>
 <div id="adModal"><div class="adBox"><div class="adTop"><span>📢 IKLAN • DARI HOST</span><span id="adCountdown">5 detik</span></div><img id="adImage" src="" alt="Iklan"><div class="adCaption" id="adCaption"></div><div class="adProgress"><div id="adProgressFill"></div></div><div class="adBtnRow"><button class="btn btn-dark" style="padding:11px" onclick="closeAd()">✕ Tutup Iklan</button></div></div></div>
-<div id="winnerModal"><div class="winnerBox" id="winnerBox"><div class="confetti" id="winnerConfetti">🎉🎊🎉🎊🎉</div><div class="winnerEmoji" id="winnerEmoji">🐺</div><div class="winnerTitle" id="winnerTitle">WEREWOLF MENANG!</div><div class="winnerMsg" id="winnerMsg">...</div><div class="winnerList"><div class="winnerListTitle">📜 DAFTAR ROLE SEMUA PEMAIN</div><div id="winnerListContent"></div></div><button id="btnWinnerPlayAgain" class="btn btn-primary" style="padding:16px;font-size:15px" onclick="playAgainFromWinner()">🔄 MAIN LAGI - LANGSUNG MULAI!</button><div style="font-size:11px;color:#b9a5d6;margin-top:8px">Tanpa input nama & kode lagi • Room tetap sama</div><button class="btn btn-dark" style="margin-top:10px" onclick="closeWinnerPopup()">👀 LIHAT PAPAN GAME DULU</button></div></div>
+<div id="winnerModal"><div class="winnerBox" id="winnerBox"><div class="confetti" id="winnerConfetti">🎉🎊🎉🎊🎉</div><div class="winnerEmoji" id="winnerEmoji">🐺</div><div class="winnerTitle" id="winnerTitle">WEREWOLF MENANG!</div><div class="winnerMsg" id="winnerMsg">...</div><div class="winnerList"><div class="winnerListTitle">📜 DAFTAR ROLE SEMUA PEMAIN</div><div id="winnerListContent"></div></div><button id="btnWinnerPlayAgain" class="btn btn-primary" style="padding:16px;font-size:15px" onclick="playAgainFromWinner()">⚙️ SETTING ULANG & MAIN LAGI</button><div style="font-size:11px;color:#b9a5d6;margin-top:8px">Balik ke lobby • Host bisa ubah waktu / role / jumlah wolf dulu • Baru klik MULAI</div><div style="font-size:11px;color:#b9a5d6;margin-top:8px">Tanpa input nama & kode lagi • Room tetap sama</div><button class="btn btn-dark" style="margin-top:10px" onclick="closeWinnerPopup()">👀 LIHAT PAPAN GAME DULU</button></div></div>
 <div class="wrap">
 <div class="topBrand"><div class="logo">🐺</div><h1>DESA TERKUTUK</h1><p>SIAPA SERIGALA DI ANTARA KITA?</p><div style="margin-top:8px"><span class="pill">🎙️ Narator Mbah Kromo</span> <span class="pill">✨ V11</span></div></div>
 <div id="connStatus">🔴 Belum nyambung ke server... tunggu / cek node server.js</div>
@@ -278,6 +289,7 @@ input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;b
 </div>
 </div>
 </div>
+<div id="sceneModal"><div class="sceneBox" id="sceneBox"><img id="sceneImg" src="" alt="Scene"><div class="sceneOverlay"><div id="sceneEmoji" style="font-size:64px">🐺</div><div id="sceneTitle" class="sceneTitle">...</div><div id="sceneSub" class="sceneSub">...</div><button class="btn btn-dark" style="margin-top:14px;width:auto;padding:11px 22px" onclick="closeScene()">Lanjut ➡️</button><div style="font-size:10px;color:#ccc;margin-top:6px">Otomatis nutup 5 detik</div></div></div></div>
 <div id="killCam"><div style="font-size:60px">🐺</div><div id="killCamText"></div><div id="killCamSub" style="color:#ccc"></div><button class="btn btn-dark" style="margin-top:16px;width:auto;padding:12px 24px" onclick="closeKillCam()">Tutup</button></div>
 <div id="voiceBar" style="display:none">
   <div class="vInfo"><b id="voiceStatus">🎤 Voice OFF</b><small id="voiceSub">Klik NYALAIN buat ngobrol suara</small></div>
@@ -290,6 +302,10 @@ input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;b
 <audio id="bgm" loop><source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_2c8a7a5a3d.mp3" type="audio/mpeg"></audio>
 <audio id="howl"><source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_4d9c2a7b3d.mp3" type="audio/mpeg"></audio>
 <audio id="scream"><source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_4d9c2a7b3d.mp3" type="audio/mpeg"></audio>
+<audio id="sndKill"><source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_4d9c2a7b3d.mp3" type="audio/mpeg"></audio>
+<audio id="sndLynch"><source src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_3c2a1a5a3d.mp3" type="audio/mpeg"></audio>
+<audio id="sndSaved"><source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_2c8a7a5a3d.mp3" type="audio/mpeg"></audio>
+<audio id="sndWin"><source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_1a2b3c4d5e.mp3" type="audio/mpeg"></audio>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 let socket = io({ reconnection: true, reconnectionAttempts: 999, reconnectionDelay: 1000, reconnectionDelayMax: 5000, timeout: 20000, transports: ["websocket", "polling"] }), myCode = null, myName = null, myRole = null, lastNarration = "", musicOn = true, socketConnected = false, currentPhase = 'lobby', isHostNow = false, myRoleData = null, lastPlayers = [];
@@ -457,10 +473,10 @@ socket.on('playerKicked', d=>{ updateLog(d.log); renderPlayers(d.players); showN
 socket.on('hostChanged', d=>{ alert(`👑 Host baru: ${d.newHost}`); });
 socket.on('roleAssigned', d=>{ myRole=d.role; myRoleData=d.roleData; lastPlayers=d.allPlayers||[]; el('winnerModal').classList.remove('show'); el('lobbyScreen').style.display='none'; el('gameScreen').style.display='block'; updateAdPanels(); showVoiceBar(); const r=d.roleData||{emoji:'❓',name:d.role.toUpperCase(),desc:'',color:'#6d4aff'}; el('roleCardWrap').innerHTML=`<div class="roleCard" id="roleCard" onclick="this.classList.toggle('flipped')"><div class="roleInner"><div class="roleFront"><div style="font-size:10px">KETUK BUKA</div><div style="font-size:56px;margin:12px 0">🃏</div><div style="font-family:Cinzel">KARTU TAKDIR</div></div><div class="roleBack" style="border-color:${r.color}"><div style="font-size:54px">${r.emoji}</div><div style="font-family:Cinzel;font-size:20px;color:${r.color};margin-top:8px">${esc(r.name)}</div><div style="font-size:12px;margin-top:8px;color:#d8c8f0">${esc(r.desc)}</div><button class="btn btn-dark btn-small" style="margin-top:10px" onclick="event.stopPropagation();openRules()">📜 LIHAT TUGAS & MENANG</button></div></div></div>`; if(d.lovers && d.lovers.includes(myName)){ let o=d.lovers.find(n=>n!==myName); el('loverInfo').innerHTML=`💘 LOVER dengan <b>${esc(o)}</b> - mati bareng!`; } else el('loverInfo').innerHTML=''; setTimeout(()=>{ el('roleCard')?.classList.add('flipped'); },600); if(['werewolf','alpha'].includes(d.role)) el('wolfCave').style.display='block'; else el('wolfCave').style.display='none'; renderPlayers(d.allPlayers||[]); });
 socket.on('gameStarted', d=>{ currentPhase='night'; showChatAll(false); el('announceBanner').classList.remove('show'); showNarration(d.narration); setPhase('night'); playSound('howl'); updateAdPanels(); applyVoicePhase(); });
-socket.on('dayStarted', d=>{ currentPhase='day'; showChatAll(true); if(d.announcement) showAnnouncement(d.announcement); if(d.killCam) showKillCam(d.killCam); showNarration(d.narration); renderPlayers(d.players); renderVote(d.players); updateLog(d.log); setPhase('day'); applyVoicePhase(); });
-socket.on('nightStarted', d=>{ currentPhase='night'; showChatAll(false); el('announceBanner').classList.remove('show'); showNarration(d.narration); renderPlayers(d.players); renderNightAction(d.players); updateLog(d.log); setPhase('night'); applyVoicePhase(); });
+socket.on('dayStarted', d=>{ currentPhase='day'; showChatAll(true); if(d.announcement){ showAnnouncement(d.announcement); if(d.announcement.type==='killed') showScene('kill', d.announcement.title, d.announcement.sub, 'marah'); else if(d.announcement.type==='saved') showScene('saved', d.announcement.title, d.announcement.sub, 'senang'); else if(d.announcement.type==='peace') showScene('peace', d.announcement.title, d.announcement.sub, 'senang'); } if(d.killCam) showKillCam(d.killCam); showNarration(d.narration); renderPlayers(d.players); renderVote(d.players); updateLog(d.log); setPhase('day'); applyVoicePhase(); });
+socket.on('nightStarted', d=>{ currentPhase='night'; showChatAll(false); el('announceBanner').classList.remove('show'); if(d.narration && d.narration.includes('digantung')) showScene('lynch', '🪓 WARGA DIGANTUNG!', d.narration.slice(0,120), 'marah'); showNarration(d.narration); renderPlayers(d.players); renderNightAction(d.players); updateLog(d.log); setPhase('night'); applyVoicePhase(); });
 socket.on('seerResult', d=>{ alert(`🔮 SEER: ${d.target} adalah ${d.isWerewolf?'🐺 WEREWOLF!':'✅ BUKAN werewolf ('+d.role+')'}`); });
-socket.on('gameOver', d=>{ currentPhase='ended'; showChatAll(false); showNarration(d.message); renderPlayers(d.players); el('actionArea').innerHTML=`<button id="btnPlayAgain" class="btn btn-primary" onclick="playAgain()">🔄 MAIN LAGI - LANGSUNG MULAI!</button><div style="font-size:11px;color:#b9a5d6;text-align:center;margin-top:8px">Tanpa input nama & kode lagi • Room tetap sama</div>`; el('voteArea').innerHTML=''; el('voteTallyWrap').innerHTML=''; setTimeout(()=>{ showWinnerPopup(d); }, 600); });
+socket.on('gameOver', d=>{ currentPhase='ended'; showChatAll(false); showNarration(d.message); renderPlayers(d.players); if(d.winner==='werewolves') showScene('winWolf','🐺 WEREWOLF MENANG!','Desa dikuasai serigala...','sedih'); else if(d.winner==='villagers') showScene('winVillager','🎉 VILLAGER MENANG!','Desa bebas!','senang'); else showScene('lynch','🤡 JESTER MENANG!','Kena prank badut!','marah'); el('actionArea').innerHTML=`<button id="btnPlayAgain" class="btn btn-primary" onclick="playAgain()">⚙️ SETTING ULANG & MAIN LAGI</button><div style="font-size:11px;color:#b9a5d6;text-align:center;margin-top:8px">Balik ke lobby • Host setting ulang dulu</div>`; el('voteArea').innerHTML=''; el('voteTallyWrap').innerHTML=''; setTimeout(()=>{ showWinnerPopup(d); }, 5500); });
 socket.on('voteUpdate', votes=>{ renderVoteTally(votes); });
 socket.on('werewolfChatMsg', d=>{ let list=el('wolfChatList'); list.innerHTML=d.chat.map(c=>`<div class="wolfMsg ${c.name===myName?'me':''}"><b>${c.name===myName?'Kamu 🐺':esc(c.name)+' 🐺'}</b>${esc(c.msg)}</div>`).join(''); list.scrollTop=list.scrollHeight; });
 socket.on('errorMsg', m=>{ showHomeError(m); alert(m); });
@@ -468,7 +484,9 @@ socket.on('witchDone', d=>{ alert(d.action==='heal'?'🧙 Heal dipakai!':'🧪 P
 socket.on('cupidPrompt', d=>{ let pilih=prompt('💘 CUPID! Pilih 2 lovers (pisahin koma). Pemain: '+d.players.join(', ')+'\nContoh: Budi,Andi'); if(!pilih) return; let [l1,l2]=pilih.split(',').map(s=>s.trim()); socket.emit('cupidChoice',{code:myCode,lover1:l1,lover2:l2}); });
 socket.on('cupidDone', d=>{ alert(`💘 Kamu udah jodohin ${d.lover1} & ${d.lover2}!`); });
 function showNarration(text){ if(!text) return; lastNarration=text; let box=el('narrationBox'); box.innerHTML=''; let i=0; box.dataset.run=(parseInt(box.dataset.run||0)+1); let myRun=box.dataset.run; (function type(){ if(String(myRun)!==String(box.dataset.run)) return; if(i<text.length){ box.innerHTML=esc(text.substring(0,i+1)); i++; setTimeout(type,14); } else box.innerHTML=esc(text); })(); speak(text); }
-function speak(t){ if(!('speechSynthesis' in window)) return; try{ speechSynthesis.cancel(); let u=new SpeechSynthesisUtterance(String(t).replace(/[^a-zA-Z0-9 .,!?]/g,' ')); u.lang='id-ID'; u.rate=0.85; u.pitch=0.7; speechSynthesis.speak(u); }catch(e){} }
+let mbahVoice = null;
+function getMbahVoice(){ if(mbahVoice) return mbahVoice; let voices = speechSynthesis.getVoices().filter(v=>v.lang.includes('id')); if(voices.length===0) voices = speechSynthesis.getVoices(); mbahVoice = voices[Math.floor(Math.random()*voices.length)] || null; return mbahVoice; }
+function speak(t, mood){ if(!('speechSynthesis' in window)) return; try{ speechSynthesis.cancel(); let u=new SpeechSynthesisUtterance(String(t).replace(/[^a-zA-Z0-9 .,!?]/g,' ')); u.lang='id-ID'; u.voice=getMbahVoice(); if(mood==='marah'){ u.rate=1.05; u.pitch=0.4; } else if(mood==='sedih'){ u.rate=0.65; u.pitch=0.9; } else if(mood==='senang'){ u.rate=1.0; u.pitch=1.1; } else { u.rate=0.85; u.pitch=0.7; } speechSynthesis.speak(u); }catch(e){} }
 function speakLast(){ if(lastNarration) speak(lastNarration); }
 function playSound(id){ let a=el(id); if(a&&musicOn){ a.volume=0.35; a.play().catch(()=>{}); } }
 function toggleMusic(){ musicOn=!musicOn; let bgm=el('bgm'); el('musicCtrl').innerText=musicOn?'🔊 MUSIK ON':'🔇 MUSIK OFF'; if(musicOn) bgm.play().catch(()=>{}); else bgm.pause(); }
@@ -483,6 +501,25 @@ function setPhase(p){ currentPhase=p; if(p==='night'){ el('moonBig').style.displ
 function sendWolfChat(){ let m=el('wolfChatInput').value.trim(); if(!m) return; socket.emit('werewolfChat',{code:myCode,msg:m}); el('wolfChatInput').value=''; }
 function showKillCam(d){ el('killCam').classList.add('show'); el('killCamText').innerText=`${d.victim} DIMANGSA!`; el('killCamSub').innerText=`Role: ${d.role}`; playSound('scream'); setTimeout(()=>closeKillCam(),3500); }
 function closeKillCam(){ el('killCam').classList.remove('show'); }
+let sceneTimer = null;
+const SCENES = {
+  kill: { img:'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&q=80', emoji:'🐺💀', sound:'sndKill', cls:'kill' },
+  lynch: { img:'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&q=80', emoji:'🪓😱', sound:'sndLynch', cls:'lynch' },
+  saved: { img:'https://images.unsplash.com/photo-1502139214982-d0ad755818d8?w=800&q=80', emoji:'💉✨', sound:'sndSaved', cls:'saved' },
+  peace: { img:'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=800&q=80', emoji:'☀️😌', sound:'sndSaved', cls:'saved' },
+  winVillager: { img:'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800&q=80', emoji:'🎉🏆', sound:'sndWin', cls:'win' },
+  winWolf: { img:'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&q=80', emoji:'🐺🌕', sound:'sndKill', cls:'kill' }
+};
+function showScene(type, title, sub, mood){
+  let s = SCENES[type] || SCENES.kill;
+  let box = el('sceneBox'); box.className='sceneBox '+s.cls;
+  el('sceneImg').src = s.img; el('sceneEmoji').innerText = s.emoji;
+  el('sceneTitle').innerText = title; el('sceneSub').innerText = sub || '';
+  el('sceneModal').classList.add('show');
+  playSound(s.sound); speak(title+'. '+(sub||''), mood || 'marah');
+  clearTimeout(sceneTimer); sceneTimer = setTimeout(()=>closeScene(), 5000);
+}
+function closeScene(){ el('sceneModal').classList.remove('show'); clearTimeout(sceneTimer); }
 function drawAnalogClock(s,total){ const c=el('analogClock'); if(!c) return; const ctx=c.getContext('2d'); ctx.clearRect(0,0,110,110); ctx.save(); ctx.translate(55,55); ctx.beginPath(); ctx.arc(0,0,50,0,2*Math.PI); ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=2; ctx.stroke(); for(let i=0;i<12;i++){ ctx.rotate(Math.PI/6); ctx.beginPath(); ctx.moveTo(0,-46); ctx.lineTo(0,-50); ctx.strokeStyle='#a855f7'; ctx.lineWidth=i%3===0?2:1; ctx.stroke(); } ctx.rotate(-(12*Math.PI/6)); let ang=((total-s)/total)*2*Math.PI-Math.PI/2; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(48*Math.cos(ang),48*Math.sin(ang)); ctx.strokeStyle=s<10?'#ff2a2a':'#ec4899'; ctx.lineWidth=3; ctx.stroke(); ctx.beginPath(); ctx.arc(0,0,4,0,2*Math.PI); ctx.fillStyle='#fff'; ctx.fill(); ctx.restore(); }
 socket.on('timer', d=>{ el('timerPhase').innerText=d.type==='night'?'🌙 MALAM - WEREWOLF BERBURU':'☀️ SIANG - VOTE GANTUNG'; el('timerDigital').innerText=d.timeLeft; el('timerFill').style.width='100%'; drawAnalogClock(d.timeLeft,d.total); });
 socket.on('timerTick', d=>{ el('timerDigital').innerText=d.timeLeft; let total=d.type==='night'?hostConfig.nightTime:hostConfig.dayTime; el('timerFill').style.width=(d.timeLeft/total*100)+'%'; drawAnalogClock(d.timeLeft,total); });

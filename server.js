@@ -4,7 +4,6 @@ const app = express(); app.use(cors()); app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/api/ai-story', (req, res) => res.json({ ai: false }));
-// Biar Render gak anggap server nganggur + buat UptimeRobot
 app.get('/health', (req, res) => res.send('OK'));
 app.get('/ping', (req, res) => res.send('pong'));
 const server = http.createServer(app);

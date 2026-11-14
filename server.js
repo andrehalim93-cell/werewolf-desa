@@ -84,7 +84,18 @@ io.on('connection', socket => {
     let room = ROOMS[code]; if (!room) return;
     socket.to(code).emit('voice-speaking', { id: socket.id, name: room.players.find(p=>p.id===socket.id)?.name || '', speaking: !!speaking });
   });
-  socket.on('playAgain', ({ code }) => { let room = ROOMS[code]; if (!room) return; if (room.phase !== 'ended') return; room.players.forEach(p => { p.role = null; p.alive = true; p.lover = null; p.witchHeal = true; p.witchPoison = true; p.bodyguardLastTarget = null; }); room.phase = 'lobby'; room.nightActions = {}; room.votes = {}; room.werewolfChat = []; room.log = ['🔄 Game baru! Host bisa setting ulang dulu...']; io.to(code).emit('playAgainReady', { code, config: room.config }); });
+  socket.on('playAgain', ({ code }) => { 
+  let room = ROOMS[code]; 
+  if (!room) return; 
+  // JANGAN cek phase, biar Host bisa balik ke lobby kapan aja habis game selesai
+  room.players.forEach(p => { p.role = null; p.alive = true; p.lover = null; p.witchHeal = true; p.witchPoison = true; p.bodyguardLastTarget = null; }); 
+  room.phase = 'lobby'; 
+  room.nightActions = {}; 
+  room.votes = {}; 
+  room.werewolfChat = []; 
+  room.log = ['🔄 Game baru! Host bisa setting ulang dulu...']; 
+  io.to(code).emit('playAgainReady', { code, config: room.config }); 
+});
   socket.on('disconnect', () => { for (let code in ROOMS){ let room = ROOMS[code]; let wasIn = room.players.some(p => p.id === socket.id); if(!wasIn && !(room.voiceUsers||[]).includes(socket.id)) continue; let wasHost = room.hostId === socket.id; room.players = room.players.filter(p => p.id !== socket.id); if (room.voiceUsers) { room.voiceUsers = room.voiceUsers.filter(id => id !== socket.id); io.to(code).emit('voice-user-left', { id: socket.id }); io.to(code).emit('voice-count', { count: room.voiceUsers.length }); } if (room.players.length === 0){ clearInterval(room.timerInt); delete ROOMS[code]; continue; } if (wasHost){ room.hostId = room.players[0].id; room.log.push(`👑 Host cabut! Host baru: ${room.players[0].name}`); io.to(code).emit('hostChanged', { newHost: room.players[0].name, newHostId: room.hostId }); } io.to(code).emit('updateLobby', room); if(room.phase === 'night' || room.phase === 'day'){ let win = checkWinner(room); if(win){ endGame(room, win, win === 'werewolves' ? pick(NARATOR.winWolf) : pick(NARATOR.winVillager)); } } } });
 });
 const PORT = process.env.PORT || 3000;

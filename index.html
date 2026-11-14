@@ -574,8 +574,6 @@ function playSceneSound(type){
     }
   }catch(e){}
 }
-let sceneTimer = null;
-let sceneCountdown = null;
 function showScene(type, title, sub, mood){
   let s = SCENES[type] || SCENES.kill;
   let box = el('sceneBox'); box.className='sceneBox '+s.cls;

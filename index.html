@@ -166,6 +166,83 @@ input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;b
 #pttModeBtn.on{background:#facc15;color:#000;font-weight:800}
 #pttModeBtn.off{background:rgba(255,255,255,.12);color:#fff}
 #voiceBar.ptt-active{border-top-color:#22c55e}
+/* === GUA WEREWOLF V11 - ALAMI === */
+#wolfCave{
+  border:1px solid #5b3a1a !important;
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(245,215,110,.18) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(0,0,0,.6) 0%, transparent 60%),
+    linear-gradient(160deg, #1a1208 0%, #241709 35%, #0f0a05 100%) !important;
+  box-shadow: inset 0 0 30px rgba(0,0,0,.8), 0 10px 30px rgba(0,0,0,.5) !important;
+  overflow:hidden;
+  position:relative;
+}
+#wolfCave::before{
+  content:"🐺 🌕 🐾";
+  position:absolute; top:6px; right:10px;
+  font-size:14px; opacity:.35; letter-spacing:4px;
+  pointer-events:none;
+}
+#wolfCave .cardTitle{
+  color:#f5d76e !important;
+  font-size:15px; letter-spacing:1px;
+  text-shadow:0 2px 10px rgba(245,215,110,.4);
+  border-bottom:1px dashed rgba(245,215,110,.25);
+  padding-bottom:10px;
+}
+#wolfCave .cardTitle::after{
+  content:"• hanya werewolf yang bisa lihat";
+  display:block; font-family:'Poppins'; font-size:10px;
+  color:#cbb8a8; letter-spacing:0; text-shadow:none; font-weight:400;
+}
+#wolfChatList{
+  max-height:180px; overflow:auto;
+  padding:10px 4px 10px 10px;
+  display:flex; flex-direction:column; gap:8px;
+  scrollbar-width:thin; scrollbar-color:#5b3a1a transparent;
+}
+#wolfChatList::-webkit-scrollbar{ width:5px }
+#wolfChatList::-webkit-scrollbar-thumb{ background:#5b3a1a; border-radius:99px }
+#wolfChatList:empty::before{
+  content:"🌙 Gua sunyi... bisikkan rencanamu di sini, jangan sampai warga dengar...";
+  font-size:12px; color:#a89a85; text-align:center;
+  padding:16px 10px; border:1px dashed rgba(255,255,255,.15); border-radius:12px;
+  line-height:1.6;
+}
+.wolfMsg{
+  max-width:85%; padding:9px 12px; border-radius:16px 16px 16px 4px;
+  background:linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.05));
+  border:1px solid rgba(255,255,255,.1);
+  font-size:12.5px; line-height:1.5; word-break:break-word;
+  animation:popIn .25s ease;
+}
+.wolfMsg.me{
+  align-self:flex-end; border-radius:16px 16px 4px 16px;
+  background:linear-gradient(135deg, #7c2d12, #431407);
+  border-color:#ff6a3d; color:#fff;
+}
+.wolfMsg b{ color:#f5d76e; font-size:11px; display:block; margin-bottom:2px }
+.wolfMsg.me b{ color:#ffb199 }
+.wolfMsg small{ color:#b9a5a0; font-size:10px }
+#wolfCave .wolfInputRow{
+  display:flex; gap:8px; margin-top:10px;
+  background:rgba(0,0,0,.4); padding:8px; border-radius:99px;
+  border:1px solid rgba(245,215,110,.25);
+}
+#wolfCave .wolfInputRow input{
+  margin:0 !important; border:none !important; background:transparent !important;
+  padding:10px 12px !important; font-size:13px !important;
+}
+#wolfCave .wolfInputRow input::placeholder{ color:#8a7a68 }
+#wolfCave .wolfInputRow button{
+  background:linear-gradient(90deg,#f5d76e,#f59e0b) !important;
+  color:#000 !important; font-weight:800 !important;
+  border-radius:99px !important; padding:10px 16px !important; white-space:nowrap;
+}
+.wolfHint{
+  text-align:center; font-size:10.5px; color:#9a8a75;
+  margin-top:8px; line-height:1.5;
+}
 </style>
 </head>
 <body>
@@ -188,7 +265,15 @@ input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;b
 <div id="timerCard"><div id="timerPhase">🌙 MALAM</div><div style="display:flex;align-items:center;justify-content:center;gap:14px;margin:8px 0"><canvas id="analogClock" width="110" height="110"></canvas><div><div id="timerDigital">--</div><div class="small">detik lagi</div><div class="pill" id="phasePill">🌙 Berburu</div></div></div><div style="background:rgba(255,255,255,.12);border-radius:99px;overflow:hidden"><div id="timerFill" style="width:100%"></div></div></div>
 <div class="gameGrid">
 <div class="leftCol"><div class="card"><div class="cardTitle">📜 BUKU DESA</div><div id="gameLog"></div></div><div id="narrationBox">Mbah Kromo sedang bercerita...</div><div id="loverInfo" style="text-align:center;margin:10px 0;font-size:12px;color:#ff6ab2"></div><div class="card" id="chatAllCard" style="display:none;border-color:#facc15"><div class="cardTitle">💬 CHAT DESA - TUDUH SIAPA WEREWOLF-NYA! <span class="pill" style="background:#facc15;color:#000;font-weight:800">☀️ SIANG AJA</span></div><div class="chatAllList" id="chatAllList"><div style="text-align:center;color:#b9a5d6;background:transparent">Belum ada tuduhan... Ayo mulai nuduh! 👇</div></div><div class="chatInputRow"><input type="text" id="chatAllInput" placeholder="Tuduh siapa? Contoh: Budi kayaknya werewolf..." maxlength="200"><button class="btn btn-primary btn-small" onclick="sendChatAll()">Kirim 💬</button></div><div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><button class="btn btn-dark btn-small" onclick="quickAccuse('mencurigakan banget!')">🤔 Mencurigakan!</button><button class="btn btn-dark btn-small" onclick="quickAccuse('diem aja dari tadi!')">🤫 Diem aja!</button><button class="btn btn-dark btn-small" onclick="quickAccuse('bukan aku!')">😇 Bukan aku!</button></div></div></div>
-<div class="midCol"><div style="text-align:center;margin-bottom:14px"><div id="roleCardWrap"></div><div class="small" style="margin-top:8px">Ketuk kartu untuk buka / tutup</div></div><div class="card"><div class="cardTitle">👥 WARGA HIDUP <span id="aliveCount"></span></div><div id="playersGame"></div></div><div class="card" id="wolfCave" style="display:none;border-color:#ff2a2a"><div class="cardTitle" style="color:#ff6a6a">🐺 GUA SERIGALA (Rahasia!)</div><div id="wolfChatList"></div><div style="display:flex;gap:8px"><input type="text" id="wolfChatInput" placeholder="Rencana berburu..." style="margin:0"><button class="btn btn-danger btn-small" style="width:auto;padding:12px 16px" onclick="sendWolfChat()">Kirim</button></div></div></div>
+<div class="midCol"><div style="text-align:center;margin-bottom:14px"><div id="roleCardWrap"></div><div class="small" style="margin-top:8px">Ketuk kartu untuk buka / tutup</div></div><div class="card"><div class="cardTitle">👥 WARGA HIDUP <span id="aliveCount"></span></div><div id="playersGame"></div></div><div class="card" id="wolfCave" style="display:none">
+  <div class="cardTitle">🐺 GUA SERIGALA</div>
+  <div id="wolfChatList"></div>
+  <div class="wolfInputRow">
+    <input type="text" id="wolfChatInput" placeholder="Bisikkan rencana berburu... 🌙" maxlength="200">
+    <button onclick="sendWolfChat()">🐺 Kirim</button>
+  </div>
+  <div class="wolfHint">🤫 Suara kamu gak kedengeran warga.<br>Sepakati 1 mangsa yang sama biar langsung mati.</div>
+</div></div>
 <div class="rightCol"><div class="card" style="border-color:#facc15;box-shadow:0 0 20px rgba(250,204,21,.15)"><div class="cardTitle">🗳️ VOTING & AKSI <span class="pill" style="background:#facc15;color:#000;font-weight:800">KANAN</span></div><div id="voteArea"></div><div id="actionArea" style="margin-top:8px"></div><div id="voteTallyWrap"></div><div id="voteLog" style="display:none"></div></div><div class="card" style="background:rgba(255,255,255,.05)"><div style="font-size:12px;font-weight:700;margin-bottom:6px">💡 Cara main:</div><div style="font-size:11px;color:#b9a5d6;line-height:1.6">Siang = Voice + Chat + klik nama di kanan buat vote gantung.<br>Malam = klik nama di kanan buat bunuh / heal / intip sesuai role kamu.<br>Yang paling banyak vote-nya ada 👑 di atas kartunya.</div></div></div>
 </div>
 </div>

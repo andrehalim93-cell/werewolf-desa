@@ -11,7 +11,8 @@ const io = socketIo(server, {
   cors: { origin: "*" },
   pingInterval: 25000,
   pingTimeout: 60000,
-  transports: ["websocket", "polling"]
+  transports: ["websocket", "polling"],
+  maxHttpBufferSize: 10 * 1024 * 1024 // 10MB - biar iklan gak ke-tolak
 });
 const ROOMS = {};
 const ALL_ROLES = {

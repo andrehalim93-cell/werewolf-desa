@@ -254,6 +254,19 @@ input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;b
 .sceneOverlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:20px 16px 16px;background:linear-gradient(to top, rgba(0,0,0,.95) 0%, rgba(0,0,0,.4) 55%, transparent 100%);text-align:center}
 .sceneTitle{font-family:'Cinzel',serif;font-size:24px;margin:8px 0 6px;text-shadow:0 2px 10px #000}
 .sceneSub{font-size:13px;color:#ddd;line-height:1.6}
+.lobbyChatCard{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:18px;overflow:hidden;margin:14px 0}
+.lobbyChatHead{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:linear-gradient(90deg,#7c3aed,#a855f7);font-size:13px}
+.lobbyChatHead span{font-size:10px;background:rgba(0,0,0,.25);padding:4px 8px;border-radius:999px}
+.lobbyChatList{height:180px;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:rgba(0,0,0,.25)}
+.lobbyBubble{max-width:82%;padding:9px 12px;border-radius:16px;font-size:13px;line-height:1.45;word-break:break-word}
+.lobbyBubble.me{align-self:flex-end;background:linear-gradient(135deg,#f59e0b,#facc15);color:#1a1a1a;border-bottom-right-radius:4px}
+.lobbyBubble.other{align-self:flex-start;background:#2e2a4a;color:#eee;border-bottom-left-radius:4px;border:1px solid rgba(255,255,255,.1)}
+.lobbyBubble b{display:block;font-size:11px;margin-bottom:2px;opacity:.8}
+.lobbyBubble .lobbyTime{font-size:9px;opacity:.6;text-align:right;margin-top:4px;display:block}
+.lobbySysMsg{align-self:center;background:rgba(255,255,255,.08);padding:6px 12px;border-radius:999px;font-size:11px;color:#bbb;text-align:center}
+.lobbyChatInputRow{display:flex;gap:8px;padding:10px;background:rgba(0,0,0,.35);align-items:center}
+.lobbyChatInputRow input{flex:1;background:#1e1b33;border:1px solid rgba(255,255,255,.15);color:#fff;padding:11px 14px;border-radius:999px;outline:none;font-size:13px}
+.lobbySendBtn{width:42px;height:42px;border:none;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#facc15);font-size:16px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -267,6 +280,17 @@ input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;b
 <div id="connStatus">🔴 Belum nyambung ke server... tunggu / cek node server.js</div>
 <div id="homeScreen"><div class="homeWrap"><div class="card"><div style="text-align:center;font-size:12px;color:#d8c8f0;margin-bottom:12px">Masukin nama kamu dulu...</div><input type="text" id="nameInput" placeholder="Nama kamu..." maxlength="15" autocomplete="off"><input type="text" id="codeInput" placeholder="Kode Desa" maxlength="4" style="text-transform:uppercase" autocomplete="off"><div class="row2"><button class="btn btn-primary" id="btnCreate" onclick="createRoom()">🏠 BUAT DESA</button><button class="btn btn-dark" id="btnJoin" onclick="joinRoom()">🚪 GABUNG</button></div><div id="homeError" style="display:none;color:#ff6a6a;font-size:12px;text-align:center;margin-top:10px"></div><button class="btn btn-dark" style="margin-top:10px" onclick="openRules()">📜 LIHAT RULES DULU</button></div></div></div>
 <div id="lobbyScreen" style="display:none"><div class="lobbyWrap"><div class="card" style="text-align:center"><div style="font-size:11px;letter-spacing:2px;color:#b9a5d6">KODE DESA KAMU</div><div class="codeBig" id="roomCodeBig">----</div><button class="btn btn-dark btn-small" style="margin-top:8px" onclick="copyCode()">📋 Salin Kode</button></div><div class="card"><div class="cardTitle">👥 WARGA DESA <span id="lobbyCount"></span></div><div id="playerList"></div></div>
+<div class="lobbyChatCard">
+  <div class="lobbyChatHead">💬 <b>Chat Lobby</b> <span id="lobbyChatCount">0 orang di sini</span></div>
+  <div id="lobbyChatList" class="lobbyChatList">
+    <div class="lobbySysMsg">👋 Selamat datang di lobby! Sapa temenmu dulu...</div>
+  </div>
+  <div class="lobbyChatInputRow">
+    <input id="lobbyChatInput" maxlength="200" placeholder="Ketik pesan... 👋" autocomplete="off">
+    <button onclick="sendLobbyChat()" class="lobbySendBtn">➤</button>
+  </div>
+  <div style="font-size:10px;color:#888;text-align:center;margin-top:6px">Chat lobby hilang pas game mulai • Jangan toxic ya 😎</div>
+</div>  
 <div class="card" id="adPanelLobby" style="display:none;border-color:#facc15"><div class="adMiniHead" onclick="toggleAdMini('Lobby')"><div><b>📢 KIRIM IKLAN</b> <span class="pill" style="background:#facc15;color:#000;font-weight:800;padding:2px 7px;font-size:10px">HOST ONLY</span></div><button class="adMiniToggle" id="adToggleLobby">+ Buka</button></div><div class="adMiniBody" id="adMiniBodyLobby"><label class="fileBtn" for="adFileLobby">📁 PILIH GAMBAR IKLAN</label><input type="file" id="adFileLobby" accept="image/*" style="display:none" onchange="onAdFile(this,'adPreviewLobby')"><img id="adPreviewLobby"><input type="text" id="adCaptionLobby" placeholder="Caption iklan (opsional)" maxlength="80"><div class="adDurationRow"><label>⏱️ Detik muncul?</label><input type="number" id="adDurationLobby" value="5" min="2" max="30"></div><div style="display:flex;gap:8px"><button class="btn btn-small" style="flex:1;background:#facc15;color:#000;padding:10px;border-radius:12px;font-weight:800;font-size:12px" onclick="sendAd('Lobby')">📢 KIRIM</button><button class="btn btn-dark btn-small" style="flex:1;padding:10px;font-size:12px" onclick="clearAd('Lobby')">🗑️ Hapus</button></div></div></div>
 <div class="card" id="hostPanel" style="display:none"><div class="cardTitle">⚙️ PENGATURAN HOST</div><div class="rangeRow"><span>🐺 Jumlah Werewolf</span><b id="wolfCountLabel">1 🐺</b></div><input type="range" class="hostRange" id="wolfCount" min="1" max="3" value="1" oninput="updateHostConfig()"><div style="display:flex;gap:10px;margin:14px 0 4px"><label style="flex:1">🌙 Malam (detik)<input type="number" class="timeInput" id="nightTime" value="35" min="10" max="120" onchange="updateHostConfig()"></label><label style="flex:1">☀️ Siang (detik)<input type="number" class="timeInput" id="dayTime" value="45" min="10" max="120" onchange="updateHostConfig()"></label></div><div style="font-size:12px;margin:10px 0 2px;font-weight:700">🎭 Role yang aktif: ketuk untuk on/off</div><div id="roleToggles" class="roleGrid"></div></div><button id="startBtn" class="btn btn-primary" style="display:none;padding:18px;font-size:16px" onclick="startGame()">🌕 MULAI GAME - KUNCI GERBANG!</button></div></div>
 <div id="gameScreen" style="display:none">
@@ -499,6 +523,9 @@ function witchUse(a){ let t=window._witchTarget; if(!t) return alert('Pilih oran
 function updateLog(log){ el('gameLog').innerHTML=log.map(l=>`<div>• ${esc(l)}</div>`).join(''); }
 function setPhase(p){ currentPhase=p; if(p==='night'){ el('moonBig').style.display='block'; el('sunBig').style.display='none'; el('phasePill').innerText='🌙 Berburu'; } else { el('moonBig').style.display='none'; el('sunBig').style.display='block'; el('phasePill').innerText='☀️ Diskusi'; } }
 function sendWolfChat(){ let m=el('wolfChatInput').value.trim(); if(!m) return; socket.emit('werewolfChat',{code:myCode,msg:m}); el('wolfChatInput').value=''; }
+function sendLobbyChat(){ let inp=document.getElementById('lobbyChatInput'); let m=inp.value.trim(); if(!m) return; socket.emit('lobbyChat',{code:myCode, msg:m}); inp.value=''; inp.focus(); }
+socket.on('lobbyChatMsg', d=>{ let list=document.getElementById('lobbyChatList'); if(!list) return; list.innerHTML = d.chat.map(c=>`<div class="lobbyBubble ${c.name===myName?'me':'other'}"><b>${c.name===myName?'Kamu ✨':c.name}</b>${c.msg}<span class="lobbyTime">${c.time||''}</span></div>`).join(''); list.scrollTop=list.scrollHeight; });
+document.addEventListener('DOMContentLoaded', ()=>{ let li=document.getElementById('lobbyChatInput'); if(li) li.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); sendLobbyChat(); } }); });
 function showKillCam(d){ el('killCam').classList.add('show'); el('killCamText').innerText=`${d.victim} DIMANGSA!`; el('killCamSub').innerText=`Role: ${d.role}`; playSound('scream'); setTimeout(()=>closeKillCam(),3500); }
 function closeKillCam(){ el('killCam').classList.remove('show'); }
 let sceneTimer = null;

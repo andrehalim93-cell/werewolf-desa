@@ -175,9 +175,9 @@ input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;b
 <div id="adModal"><div class="adBox"><div class="adTop"><span>📢 IKLAN • DARI HOST</span><span id="adCountdown">5 detik</span></div><img id="adImage" src="" alt="Iklan"><div class="adCaption" id="adCaption"></div><div class="adProgress"><div id="adProgressFill"></div></div><div class="adBtnRow"><button class="btn btn-dark" style="padding:11px" onclick="closeAd()">✕ Tutup Iklan</button></div></div></div>
 <div id="winnerModal"><div class="winnerBox" id="winnerBox"><div class="confetti" id="winnerConfetti">🎉🎊🎉🎊🎉</div><div class="winnerEmoji" id="winnerEmoji">🐺</div><div class="winnerTitle" id="winnerTitle">WEREWOLF MENANG!</div><div class="winnerMsg" id="winnerMsg">...</div><div class="winnerList"><div class="winnerListTitle">📜 DAFTAR ROLE SEMUA PEMAIN</div><div id="winnerListContent"></div></div><button id="btnWinnerPlayAgain" class="btn btn-primary" style="padding:16px;font-size:15px" onclick="playAgainFromWinner()">🔄 MAIN LAGI - LANGSUNG MULAI!</button><div style="font-size:11px;color:#b9a5d6;margin-top:8px">Tanpa input nama & kode lagi • Room tetap sama</div><button class="btn btn-dark" style="margin-top:10px" onclick="closeWinnerPopup()">👀 LIHAT PAPAN GAME DULU</button></div></div>
 <div class="wrap">
-<div class="topBrand"><div class="logo">🐺</div><h1>DESA TERKUTUK</h1><p>SIAPA SERIGALA DI ANTARA KITA?</p><div style="margin-top:8px"><span class="pill">🎙️ Narator Mbah Kromo</span> <span class="pill">✨ V9 FIXED</span></div></div>
+<div class="topBrand"><div class="logo">🐺</div><h1>DESA TERKUTUK</h1><p>SIAPA SERIGALA DI ANTARA KITA?</p><div style="margin-top:8px"><span class="pill">🎙️ Narator Mbah Kromo</span> <span class="pill">✨ V10 ONLINE FIX VOICE</span></div></div>
 <div id="connStatus">🔴 Belum nyambung ke server... tunggu / cek node server.js</div>
-<div id="homeScreen"><div class="homeWrap"><div class="card"><div style="text-align:center;font-size:12px;color:#d8c8f0;margin-bottom:12px">Masukin nama kamu dulu...</div><input type="text" id="nameInput" placeholder="Nama kamu..." maxlength="15" autocomplete="off"><input type="text" id="codeInput" placeholder="Kode Desa" maxlength="4" style="text-transform:uppercase" autocomplete="off"><div class="row2"><button class="btn btn-primary" id="btnCreate" onclick="createRoom()">🏠 BUAT DESA</button><button class="btn btn-dark" id="btnJoin" onclick="joinRoom()">🚪 GABUNG</button></div><div id="homeError" style="display:none;color:#ff6a6a;font-size:12px;text-align:center;margin-top:10px"></div><button class="btn btn-dark" style="margin-top:10px" onclick="openRules()">📜 LIHAT RULES DULU</button></div></div></div>
+<div id="homeScreen"><div class="homeWrap"><div class="card"><div style="text-align:center;font-size:12px;color:#d8c8f0;margin-bottom:12px">Masukin nama kamu dulu, Nak...</div><input type="text" id="nameInput" placeholder="Nama kamu... contoh: Kristin" maxlength="15" autocomplete="off"><input type="text" id="codeInput" placeholder="Kode Desa (kalau mau gabung)" maxlength="4" style="text-transform:uppercase" autocomplete="off"><div class="row2"><button class="btn btn-primary" id="btnCreate" onclick="createRoom()">🏠 BUAT DESA</button><button class="btn btn-dark" id="btnJoin" onclick="joinRoom()">🚪 GABUNG</button></div><div id="homeError" style="display:none;color:#ff6a6a;font-size:12px;text-align:center;margin-top:10px"></div><button class="btn btn-dark" style="margin-top:10px" onclick="openRules()">📜 LIHAT RULES DULU</button></div></div></div>
 <div id="lobbyScreen" style="display:none"><div class="lobbyWrap"><div class="card" style="text-align:center"><div style="font-size:11px;letter-spacing:2px;color:#b9a5d6">KODE DESA KAMU</div><div class="codeBig" id="roomCodeBig">----</div><button class="btn btn-dark btn-small" style="margin-top:8px" onclick="copyCode()">📋 Salin Kode</button></div><div class="card"><div class="cardTitle">👥 WARGA DESA <span id="lobbyCount"></span></div><div id="playerList"></div></div>
 <div class="card" id="adPanelLobby" style="display:none;border-color:#facc15"><div class="adMiniHead" onclick="toggleAdMini('Lobby')"><div><b>📢 KIRIM IKLAN</b> <span class="pill" style="background:#facc15;color:#000;font-weight:800;padding:2px 7px;font-size:10px">HOST ONLY</span></div><button class="adMiniToggle" id="adToggleLobby">+ Buka</button></div><div class="adMiniBody" id="adMiniBodyLobby"><label class="fileBtn" for="adFileLobby">📁 PILIH GAMBAR IKLAN</label><input type="file" id="adFileLobby" accept="image/*" style="display:none" onchange="onAdFile(this,'adPreviewLobby')"><img id="adPreviewLobby"><input type="text" id="adCaptionLobby" placeholder="Caption iklan (opsional)" maxlength="80"><div class="adDurationRow"><label>⏱️ Detik muncul?</label><input type="number" id="adDurationLobby" value="5" min="2" max="30"></div><div style="display:flex;gap:8px"><button class="btn btn-small" style="flex:1;background:#facc15;color:#000;padding:10px;border-radius:12px;font-weight:800;font-size:12px" onclick="sendAd('Lobby')">📢 KIRIM</button><button class="btn btn-dark btn-small" style="flex:1;padding:10px;font-size:12px" onclick="clearAd('Lobby')">🗑️ Hapus</button></div></div></div>
 <div class="card" id="hostPanel" style="display:none"><div class="cardTitle">⚙️ PENGATURAN HOST</div><div class="rangeRow"><span>🐺 Jumlah Werewolf</span><b id="wolfCountLabel">1 🐺</b></div><input type="range" class="hostRange" id="wolfCount" min="1" max="3" value="1" oninput="updateHostConfig()"><div style="display:flex;gap:10px;margin:14px 0 4px"><label style="flex:1">🌙 Malam (detik)<input type="number" class="timeInput" id="nightTime" value="35" min="10" max="120" onchange="updateHostConfig()"></label><label style="flex:1">☀️ Siang (detik)<input type="number" class="timeInput" id="dayTime" value="45" min="10" max="120" onchange="updateHostConfig()"></label></div><div style="font-size:12px;margin:10px 0 2px;font-weight:700">🎭 Role yang aktif: ketuk untuk on/off</div><div id="roleToggles" class="roleGrid"></div></div><button id="startBtn" class="btn btn-primary" style="display:none;padding:18px;font-size:16px" onclick="startGame()">🌕 MULAI GAME - KUNCI GERBANG!</button></div></div>
@@ -189,7 +189,7 @@ input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;b
 <div class="gameGrid">
 <div class="leftCol"><div class="card"><div class="cardTitle">📜 BUKU DESA</div><div id="gameLog"></div></div><div id="narrationBox">Mbah Kromo sedang bercerita...</div><div id="loverInfo" style="text-align:center;margin:10px 0;font-size:12px;color:#ff6ab2"></div><div class="card" id="chatAllCard" style="display:none;border-color:#facc15"><div class="cardTitle">💬 CHAT DESA - TUDUH SIAPA WEREWOLF-NYA! <span class="pill" style="background:#facc15;color:#000;font-weight:800">☀️ SIANG AJA</span></div><div class="chatAllList" id="chatAllList"><div style="text-align:center;color:#b9a5d6;background:transparent">Belum ada tuduhan... Ayo mulai nuduh! 👇</div></div><div class="chatInputRow"><input type="text" id="chatAllInput" placeholder="Tuduh siapa? Contoh: Budi kayaknya werewolf..." maxlength="200"><button class="btn btn-primary btn-small" onclick="sendChatAll()">Kirim 💬</button></div><div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><button class="btn btn-dark btn-small" onclick="quickAccuse('mencurigakan banget!')">🤔 Mencurigakan!</button><button class="btn btn-dark btn-small" onclick="quickAccuse('diem aja dari tadi!')">🤫 Diem aja!</button><button class="btn btn-dark btn-small" onclick="quickAccuse('bukan aku!')">😇 Bukan aku!</button></div></div></div>
 <div class="midCol"><div style="text-align:center;margin-bottom:14px"><div id="roleCardWrap"></div><div class="small" style="margin-top:8px">Ketuk kartu untuk buka / tutup</div></div><div class="card"><div class="cardTitle">👥 WARGA HIDUP <span id="aliveCount"></span></div><div id="playersGame"></div></div><div class="card" id="wolfCave" style="display:none;border-color:#ff2a2a"><div class="cardTitle" style="color:#ff6a6a">🐺 GUA SERIGALA (Rahasia!)</div><div id="wolfChatList"></div><div style="display:flex;gap:8px"><input type="text" id="wolfChatInput" placeholder="Rencana berburu..." style="margin:0"><button class="btn btn-danger btn-small" style="width:auto;padding:12px 16px" onclick="sendWolfChat()">Kirim</button></div></div></div>
-<div class="rightCol"><div class="card" style="border-color:#facc15;box-shadow:0 0 20px rgba(250,204,21,.15)"><div class="cardTitle">🗳️ VOTING & AKSI <span class="pill" style="background:#facc15;color:#000;font-weight:800"></span></div><div id="voteArea"></div><div id="actionArea" style="margin-top:8px"></div><div id="voteTallyWrap"></div><div id="voteLog" style="display:none"></div></div><div class="card" style="background:rgba(255,255,255,.05)"><div style="font-size:12px;font-weight:700;margin-bottom:6px">💡 Cara main:</div><div style="font-size:11px;color:#b9a5d6;line-height:1.6">Siang = Voice + Chat + klik nama di kanan buat vote gantung.<br>Malam = klik nama di kanan buat bunuh / heal / intip sesuai role kamu.<br>Yang paling banyak vote-nya ada 👑 di atas kartunya.</div></div></div>
+<div class="rightCol"><div class="card" style="border-color:#facc15;box-shadow:0 0 20px rgba(250,204,21,.15)"><div class="cardTitle">🗳️ VOTING & AKSI <span class="pill" style="background:#facc15;color:#000;font-weight:800">KANAN</span></div><div id="voteArea"></div><div id="actionArea" style="margin-top:8px"></div><div id="voteTallyWrap"></div><div id="voteLog" style="display:none"></div></div><div class="card" style="background:rgba(255,255,255,.05)"><div style="font-size:12px;font-weight:700;margin-bottom:6px">💡 Cara main:</div><div style="font-size:11px;color:#b9a5d6;line-height:1.6">Siang = Voice + Chat + klik nama di kanan buat vote gantung.<br>Malam = klik nama di kanan buat bunuh / heal / intip sesuai role kamu.<br>Yang paling banyak vote-nya ada 👑 di atas kartunya.</div></div></div>
 </div>
 </div>
 </div>
@@ -208,14 +208,7 @@ input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;b
 <script src="/socket.io/socket.io.js"></script>
 <script>
 if (typeof io === 'undefined') { alert('JANGAN buka index.html langsung! Jalankan: node server.js, lalu buka http://localhost:3000'); throw new Error('socket.io not loaded'); }
-let socket = io({
-  reconnection: true,
-  reconnectionAttempts: 999,
-  reconnectionDelay: 1000,
-  reconnectionDelayMax: 5000,
-  timeout: 20000,
-  transports: ["websocket", "polling"]
-}), myCode = null, myName = null, myRole = null, lastNarration = "", musicOn = true, socketConnected = false, currentPhase = 'lobby', isHostNow = false, myRoleData = null, lastPlayers = [];
+let socket = io({ reconnection: true, reconnectionAttempts: 999, reconnectionDelay: 1000, reconnectionDelayMax: 5000, timeout: 20000, transports: ["websocket", "polling"] }), myCode = null, myName = null, myRole = null, lastNarration = "", musicOn = true, socketConnected = false, currentPhase = 'lobby', isHostNow = false, myRoleData = null, lastPlayers = [];
 let pendingAdImage = null, adTimerInt = null;
 let voiceOn = false, voiceMuted = false, localStream = null, voicePeers = {}, voiceNames = {}, speakingCheckInt = null, mySpeaking = false;
 let pttMode = true, pttHolding = false;
@@ -287,6 +280,9 @@ function setPTTHolding(holding){
 }
 async function toggleVoice(){
   if(!myCode) return alert('Masuk room dulu!');
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    return alert('❌ MIC DI-BLOCK! Buka lewat HTTPS. Kalau di Render, harusnya udah HTTPS, coba refresh & izinkan mic.');
+  }
   if(voiceOn){ stopVoice(); return; }
   try{
     localStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation:true, noiseSuppression:true, autoGainControl:true }, video:false });
@@ -297,7 +293,7 @@ async function toggleVoice(){
     startSpeakingDetection();
     updateVoiceUI();
     if(currentPhase === 'night'){ setVoiceMuted(true); alert('🌙 Malam hari voice auto-mute! Nanti siang baru bisa PTT lagi.'); }
-  }catch(e){ alert('Mic ditolak / gak ada mic! Cek izin mic di browser HP kamu, harus Izinkan.'); console.log(e); }
+  }catch(e){ alert('Mic ditolak! Cek izin mic di browser, harus Izinkan. Error: ' + (e && e.name ? e.name : e)); }
 }
 function stopVoice(){
   voiceOn = false; pttHolding = false;
@@ -316,20 +312,25 @@ function setVoiceMuted(m, fromPTT){
 }
 function toggleMute(){ setVoiceMuted(!voiceMuted); }
 function createPeer(targetId){
+  if(voicePeers[targetId]) return voicePeers[targetId];
   let pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
   if(localStream) localStream.getTracks().forEach(t=>pc.addTrack(t, localStream));
   pc.onicecandidate = e => { if(e.candidate) socket.emit('voice-ice', { to: targetId, candidate: e.candidate }); };
   pc.ontrack = e => {
     let audioId = 'audio-'+targetId;
     let old = document.getElementById(audioId); if(old) old.remove();
-    let a = document.createElement('audio'); a.id = audioId; a.autoplay = true; a.playsInline = true; a.srcObject = e.streams[0];
+    let a = document.createElement('audio'); a.id = audioId; a.autoplay = true; a.playsInline = true; a.muted = false; a.volume = 1;
+    a.srcObject = e.streams[0];
     document.getElementById('voiceAudios').appendChild(a);
+    a.play().catch(()=>{ document.addEventListener('click', ()=>a.play(), {once:true}); document.addEventListener('touchstart', ()=>a.play(), {once:true}); });
   };
+  pc.onconnectionstatechange = ()=>{ if(pc.connectionState==='failed'){ try{pc.restartIce()}catch(e){} } };
   voicePeers[targetId] = pc;
   return pc;
 }
 async function makeOffer(targetId){
   let pc = createPeer(targetId);
+  if(pc.signalingState !== 'stable') return;
   let offer = await pc.createOffer(); await pc.setLocalDescription(offer);
   socket.emit('voice-offer', { to: targetId, offer });
 }
@@ -337,6 +338,7 @@ function startSpeakingDetection(){
   if(!localStream) return;
   try{
     let ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if(ctx.state === 'suspended') ctx.resume();
     let src = ctx.createMediaStreamSource(localStream);
     let analyser = ctx.createAnalyser(); analyser.fftSize = 512;
     src.connect(analyser);

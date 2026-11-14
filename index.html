@@ -326,10 +326,6 @@ input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;b
 <audio id="bgm" loop><source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_2c8a7a5a3d.mp3" type="audio/mpeg"></audio>
 <audio id="howl"><source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_4d9c2a7b3d.mp3" type="audio/mpeg"></audio>
 <audio id="scream"><source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_4d9c2a7b3d.mp3" type="audio/mpeg"></audio>
-<audio id="sndKill"><source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_4d9c2a7b3d.mp3" type="audio/mpeg"></audio>
-<audio id="sndLynch"><source src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_3c2a1a5a3d.mp3" type="audio/mpeg"></audio>
-<audio id="sndSaved"><source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_2c8a7a5a3d.mp3" type="audio/mpeg"></audio>
-<audio id="sndWin"><source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_1a2b3c4d5e.mp3" type="audio/mpeg"></audio>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 let socket = io({ reconnection: true, reconnectionAttempts: 999, reconnectionDelay: 1000, reconnectionDelayMax: 5000, timeout: 20000, transports: ["websocket", "polling"] }), myCode = null, myName = null, myRole = null, lastNarration = "", musicOn = true, socketConnected = false, currentPhase = 'lobby', isHostNow = false, myRoleData = null, lastPlayers = [];
@@ -537,13 +533,38 @@ const SCENES = {
   winVillager: { img:'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800&q=80', emoji:'🎉🏆', sound:'sndWin', cls:'win' },
   winWolf: { img:'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&q=80', emoji:'🐺🌕', sound:'sndKill', cls:'kill' }
 };
+// SUARA SCENE TANPA FILE - GAK KENA 403 LAGI
+let audioCtx = null;
+function playSceneSound(type){
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state==='suspended') audioCtx.resume();
+    let t = audioCtx.currentTime;
+    function tone(freq, start, dur, vol, kind){
+      let o = audioCtx.createOscillator(); let g = audioCtx.createGain();
+      o.type = kind || 'sine'; o.frequency.setValueAtTime(freq, t+start);
+      if(kind==='sawtooth') o.frequency.exponentialRampToValueAtTime(freq*0.3, t+start+dur);
+      g.gain.setValueAtTime(0.0001, t+start); g.gain.exponentialRampToValueAtTime(vol||0.2, t+start+0.05); g.gain.exponentialRampToValueAtTime(0.0001, t+start+dur);
+      o.connect(g); g.connect(audioCtx.destination); o.start(t+start); o.stop(t+start+dur+0.05);
+    }
+    if(type==='sndKill'){ // AUUUU lolongan turun
+      tone(600, 0, 0.8, 0.15, 'sawtooth'); tone(400, 0.2, 0.8, 0.15, 'sawtooth'); tone(200, 0.4, 0.6, 0.2, 'sawtooth');
+    } else if(type==='sndLynch'){ // KRAK! jedug
+      tone(150, 0, 0.2, 0.3, 'square'); tone(80, 0.15, 0.4, 0.3, 'square');
+    } else if(type==='sndSaved'){ // TING! lega
+      tone(523, 0, 0.3, 0.15, 'sine'); tone(659, 0.15, 0.3, 0.15, 'sine'); tone(784, 0.3, 0.5, 0.15, 'sine');
+    } else if(type==='sndWin'){ // TARA! menang
+      tone(523, 0, 0.2, 0.15, 'triangle'); tone(659, 0.2, 0.2, 0.15, 'triangle'); tone(784, 0.4, 0.2, 0.15, 'triangle'); tone(1046, 0.6, 0.5, 0.2, 'triangle');
+    }
+  }catch(e){}
+}
 function showScene(type, title, sub, mood){
   let s = SCENES[type] || SCENES.kill;
   let box = el('sceneBox'); box.className='sceneBox '+s.cls;
   el('sceneImg').src = s.img; el('sceneEmoji').innerText = s.emoji;
   el('sceneTitle').innerText = title; el('sceneSub').innerText = sub || '';
   el('sceneModal').classList.add('show');
-  playSound(s.sound); speak(title+'. '+(sub||''), mood || 'marah');
+  pplaySceneSound(s.sound); speak(title+'. '+(sub||''), mood || 'marah');
   clearTimeout(sceneTimer); sceneTimer = setTimeout(()=>closeScene(), 5000);
 }
 function closeScene(){ el('sceneModal').classList.remove('show'); clearTimeout(sceneTimer); }

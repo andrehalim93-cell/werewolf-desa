@@ -267,6 +267,7 @@ input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;b
 .lobbyChatInputRow{display:flex;gap:8px;padding:10px;background:rgba(0,0,0,.35);align-items:center}
 .lobbyChatInputRow input{flex:1;background:#1e1b33;border:1px solid rgba(255,255,255,.15);color:#fff;padding:11px 14px;border-radius:999px;outline:none;font-size:13px}
 .lobbySendBtn{width:42px;height:42px;border:none;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#facc15);font-size:16px;cursor:pointer}
+.voteBtn.selected{border-color:#facc15 !important;background:rgba(250,204,21,.2) !important;box-shadow:0 0 0 2px #facc15 !important}
 </style>
 </head>
 <body>
@@ -513,14 +514,27 @@ function toggleMusic(){ musicOn=!musicOn; let bgm=el('bgm'); el('musicCtrl').inn
 function renderPlayers(players){ lastPlayers=players; el('playersGame').innerHTML=players.map(p=>`<div class="player ${p.name===myName?'me':''} ${p.alive?'':'dead'}"><div class="avatar ${avatarClass(p.name)}">${esc(p.name[0].toUpperCase())}</div><div class="playerName"><b>${esc(p.name)}</b><small>${p.lover?`💘 Lover: ${esc(p.lover)}`:p.alive?'Masih hidup':'Sudah mati'}</small></div><span>${p.alive?'❤️':'💀'}</span></div>`).join(''); el('aliveCount').innerText=`(${players.filter(p=>p.alive).length} hidup)`; }
 function renderVote(players){ let alive=players.filter(p=>p.alive); el('voteArea').innerHTML=`<div style="font-family:Cinzel;margin-bottom:8px;font-size:13px">🗳️ VOTE GANTUNG<br><span style="font-size:11px;font-family:Poppins;color:#b9a5d6">Klik nama buat vote gantung - Mayor 2x</span></div>`+alive.map(p=>`<button class="actionBtn voteBtn" onclick="vote('${esc(p.name)}')"><span class="aAvatar ${avatarClass(p.name)}">${esc(p.name[0].toUpperCase())}</span><span class="aName">${esc(p.name)} ${p.name===myName?'(Kamu)':''}</span><span class="aBadge">🗳️ Vote</span></button>`).join(''); el('actionArea').innerHTML=''; el('voteTallyWrap').innerHTML=`<div style="font-size:11px;color:#b9a5d6;text-align:center;padding:10px">Belum ada vote masuk...</div>`; }
 function renderNightAction(players){ let alive=players.filter(p=>p.alive&&p.name!==myName); let isNight=['werewolf','alpha','seer','doctor','bodyguard','witch'].includes(myRole); let meAlive=players.find(p=>p.name===myName)?.alive; el('voteArea').innerHTML=''; el('voteTallyWrap').innerHTML=''; if(isNight&&meAlive){ let labelMap={werewolf:'🐺 PILIH MANGSA - Klik nama buat BUNUH',alpha:'👑 ALPHA - PILIH MANGSA (Vote kamu 2x)',seer:'🔮 INTIP SIAPA? - Klik nama buat INTIP',doctor:'💉 DOCTOR - HEAL SIAPA? (Boleh diri sendiri, kamu gak mati)',bodyguard:'🛡️ BODYGUARD - TUMBAL BUAT SIAPA? (Kamu MATI kalau dia diserang!)',witch:'🧙 WITCH - PILIH TARGET (Heal / Poison)'}; let label=labelMap[myRole]||'PILIH'; let list=myRole==='doctor'?players.filter(p=>p.alive):alive; let btnClass=(myRole==='werewolf'||myRole==='alpha')?'wolf':''; let btnText=(myRole==='werewolf'||myRole==='alpha')?'🐺 Bunuh':(myRole==='seer'?'🔮 Intip':(myRole==='doctor'?'💉 Heal':(myRole==='bodyguard'?'🛡️ Jaga':'🧙 Pilih'))); el('actionArea').innerHTML=`<div style="font-family:Cinzel;margin-bottom:8px;font-size:13px">${label}</div>`+list.map(p=>`<button class="actionBtn ${btnClass}" onclick="nightAct('${esc(p.name)}')"><span class="aAvatar ${avatarClass(p.name)}">${esc(p.name[0].toUpperCase())}</span><span class="aName">${esc(p.name)} ${p.name===myName?'(Kamu)':''}</span><span class="aBadge">${btnText}</span></button>`).join('')+(myRole==='witch'?`<div style="display:flex;gap:8px;margin-top:10px"><button class="btn" style="flex:1;background:#22c55e;color:#000" onclick="witchUse('heal')">💚 Heal</button><button class="btn btn-danger" style="flex:1" onclick="witchUse('poison')">🧪 Poison</button></div>`:'' ); } else { el('actionArea').innerHTML=`<div style="text-align:center;color:#b9a5d6;padding:10px">😴 Tidur... tunggu pagi<br><span style="font-size:11px">Kamu gak ada aksi malam ini</span></div>`; } }
-function vote(n){ socket.emit('vote',{code:myCode,targetName:n}); el('voteArea').innerHTML=`<div style="text-align:center;padding:14px">Kamu vote <b>${esc(n)}</b>...<br><span style="font-size:11px;color:#b9a5d6">Menunggu yang lain... Lihat jumlah voting di bawah 👇</span></div>`; }
+function vote(n){
+  socket.emit('vote',{code:myCode,targetName:n});
+  // JANGAN hapus tombol vote-nya, cuma tandain aja yang dipilih
+  document.querySelectorAll('.voteBtn').forEach(b=>b.classList.remove('selected'));
+  let btns = [...document.querySelectorAll('.voteBtn')];
+  let btn = btns.find(b=>b.innerText.includes(n));
+  if(btn) btn.classList.add('selected');
+  let info = el('voteArea').querySelector('.voteInfo');
+  if(!info){
+    el('voteArea').insertAdjacentHTML('beforeend', `<div class="voteInfo" style="text-align:center;padding:10px;background:rgba(250,204,21,.1);border-radius:12px;margin-top:8px">Kamu vote <b>${esc(n)}</b>...<br><span style="font-size:11px;color:#b9a5d6">Bisa klik lagi buat GANTI vote • Lihat jumlah voting di bawah 👇</span></div>`);
+  } else {
+    info.innerHTML = `Kamu vote <b>${esc(n)}</b>...<br><span style="font-size:11px;color:#b9a5d6">Bisa klik lagi buat GANTI vote • Lihat jumlah voting di bawah 👇</span>`;
+  }
+}
 function nightAct(n){ socket.emit('nightAction',{code:myCode,targetName:n}); if(myRole==='witch'){ window._witchTarget=n; el('actionArea').innerHTML=`<div style="text-align:center">Witch pilih <b>${esc(n)}</b>... klik Heal / Poison.</div><div style="display:flex;gap:8px;margin-top:10px"><button class="btn" style="flex:1;background:#22c55e;color:#000" onclick="witchUse('heal')">💚 Heal</button><button class="btn btn-danger" style="flex:1" onclick="witchUse('poison')">🧪 Poison</button></div>`; } else { let txt=(myRole==='werewolf'||myRole==='alpha')?'bunuh':'pilih'; el('actionArea').innerHTML=`<div style="text-align:center;padding:14px">Kamu ${txt} <b>${esc(n)}</b>...<br><span style="font-size:11px;color:#b9a5d6">Menunggu yang lain...</span></div>`; } }
 function witchUse(a){ let t=window._witchTarget; if(!t) return alert('Pilih orang dulu!'); socket.emit('witchAction',{code:myCode,action:a,targetName:t}); }
 function updateLog(log){ el('gameLog').innerHTML=log.map(l=>`<div>• ${esc(l)}</div>`).join(''); }
 function setPhase(p){ currentPhase=p; if(p==='night'){ el('moonBig').style.display='block'; el('sunBig').style.display='none'; el('phasePill').innerText='🌙 Berburu'; } else { el('moonBig').style.display='none'; el('sunBig').style.display='block'; el('phasePill').innerText='☀️ Diskusi'; } }
 function sendWolfChat(){ let m=el('wolfChatInput').value.trim(); if(!m) return; socket.emit('werewolfChat',{code:myCode,msg:m}); el('wolfChatInput').value=''; }
 function sendLobbyChat(){ let inp=document.getElementById('lobbyChatInput'); let m=inp.value.trim(); if(!m) return; socket.emit('lobbyChat',{code:myCode, msg:m}); inp.value=''; inp.focus(); }
-socket.on('lobbyChatMsg', d=>{ let list=document.getElementById('lobbyChatList'); if(!list) return; list.innerHTML = d.chat.map(c=>`<div class="lobbyBubble ${c.name===myName?'me':'other'}"><b>${c.name===myName?'Kamu ✨':c.name}</b>${c.msg}<span class="lobbyTime">${c.time||''}</span></div>`).join(''); list.scrollTop=list.scrollHeight; });
+socket.on('lobbyChatMsg', d=>{ let list=document.getElementById('lobbyChatList'); if(!list) return; list.innerHTML = d.chat.map(c=>`<div class="lobbyBubble ${c.name===myName?'me':'other'}"><b>${c.name===myName?'Kamu ✨':esc(c.name)}</b>${esc(c.msg)}<span class="lobbyTime">${c.time||''}</span></div>`).join(''); list.scrollTop=list.scrollHeight; });
 document.addEventListener('DOMContentLoaded', ()=>{ let li=document.getElementById('lobbyChatInput'); if(li) li.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); sendLobbyChat(); } }); });
 function showKillCam(d){ el('killCam').classList.add('show'); el('killCamText').innerText=`${d.victim} DIMANGSA!`; el('killCamSub').innerText=`Role: ${d.role}`; playSound('scream'); setTimeout(()=>closeKillCam(),3500); }
 function closeKillCam(){ el('killCam').classList.remove('show'); }
@@ -564,8 +578,9 @@ function showScene(type, title, sub, mood){
   el('sceneImg').src = s.img; el('sceneEmoji').innerText = s.emoji;
   el('sceneTitle').innerText = title; el('sceneSub').innerText = sub || '';
   el('sceneModal').classList.add('show');
-  pplaySceneSound(s.sound); speak(title+'. '+(sub||''), mood || 'marah');
   clearTimeout(sceneTimer); sceneTimer = setTimeout(()=>closeScene(), 5000);
+  try{ playSceneSound(s.sound); }catch(e){}
+  try{ speak(title+'. '+(sub||''), mood || 'marah'); }catch(e){}
 }
 function closeScene(){ el('sceneModal').classList.remove('show'); clearTimeout(sceneTimer); }
 function drawAnalogClock(s,total){ const c=el('analogClock'); if(!c) return; const ctx=c.getContext('2d'); ctx.clearRect(0,0,110,110); ctx.save(); ctx.translate(55,55); ctx.beginPath(); ctx.arc(0,0,50,0,2*Math.PI); ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=2; ctx.stroke(); for(let i=0;i<12;i++){ ctx.rotate(Math.PI/6); ctx.beginPath(); ctx.moveTo(0,-46); ctx.lineTo(0,-50); ctx.strokeStyle='#a855f7'; ctx.lineWidth=i%3===0?2:1; ctx.stroke(); } ctx.rotate(-(12*Math.PI/6)); let ang=((total-s)/total)*2*Math.PI-Math.PI/2; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(48*Math.cos(ang),48*Math.sin(ang)); ctx.strokeStyle=s<10?'#ff2a2a':'#ec4899'; ctx.lineWidth=3; ctx.stroke(); ctx.beginPath(); ctx.arc(0,0,4,0,2*Math.PI); ctx.fillStyle='#fff'; ctx.fill(); ctx.restore(); }

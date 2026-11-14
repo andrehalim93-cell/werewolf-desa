@@ -324,9 +324,6 @@ input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;b
   <button class="voiceBtn off" id="voiceMuteBtn" style="display:none" onclick="toggleMute()">🔊</button>
 </div>
 <div id="voiceAudios"></div>
-<audio id="bgm" loop><source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_2c8a7a5a3d.mp3" type="audio/mpeg"></audio>
-<audio id="howl"><source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_4d9c2a7b3d.mp3" type="audio/mpeg"></audio>
-<audio id="scream"><source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_4d9c2a7b3d.mp3" type="audio/mpeg"></audio>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 let socket = io({ reconnection: true, reconnectionAttempts: 999, reconnectionDelay: 1000, reconnectionDelayMax: 5000, timeout: 20000, transports: ["websocket", "polling"] }), myCode = null, myName = null, myRole = null, lastNarration = "", musicOn = true, socketConnected = false, currentPhase = 'lobby', isHostNow = false, myRoleData = null, lastPlayers = [];
@@ -580,27 +577,27 @@ function showScene(type, title, sub, mood){
   el('sceneImg').src = s.img; el('sceneEmoji').innerText = s.emoji;
   el('sceneTitle').innerText = title; el('sceneSub').innerText = sub || '';
   el('sceneModal').classList.add('show');
-  // MATIIN TIMER LAMA DULU
-  if(sceneTimer) clearTimeout(sceneTimer);
-  if(sceneCountdown) clearInterval(sceneCountdown);
-  // COUNTDOWN 3...2...1 JALAN BENERAN
+  // MATIIN TIMER LAMA, BIAR GAK NUMPUK
+  if(window._sceneTimer) clearTimeout(window._sceneTimer);
+  if(window._sceneCount) clearInterval(window._sceneCount);
+  // COUNTDOWN BENERAN JALAN 3...2...1
   let left = 3;
-  let countEl = el('sceneAutoText');
+  let countEl = document.getElementById('sceneAutoText');
   if(countEl) countEl.innerText = 'Otomatis nutup ' + left + ' detik...';
-  sceneCountdown = setInterval(()=>{
+  window._sceneCount = setInterval(()=>{
     left--;
     if(countEl) countEl.innerText = left > 0 ? 'Otomatis nutup ' + left + ' detik...' : 'Menutup...';
-    if(left <= 0) clearInterval(sceneCountdown);
+    if(left <= 0) clearInterval(window._sceneCount);
   }, 1000);
   // NUTUP BENERAN SETELAH 3 DETIK
-  sceneTimer = setTimeout(()=>closeScene(), 3000);
+  window._sceneTimer = setTimeout(()=>closeScene(), 3000);
   try{ playSceneSound(s.sound); }catch(e){}
   try{ speak(title+'. '+(sub||''), mood || 'marah'); }catch(e){}
 }
 function closeScene(){
-  if(sceneTimer) clearTimeout(sceneTimer);
-  if(sceneCountdown) clearInterval(sceneCountdown);
-  sceneTimer = null; sceneCountdown = null;
+  if(window._sceneTimer) clearTimeout(window._sceneTimer);
+  if(window._sceneCount) clearInterval(window._sceneCount);
+  window._sceneTimer = null; window._sceneCount = null;
   el('sceneModal').classList.remove('show');
 }
 function closeScene(){ el('sceneModal').classList.remove('show'); clearTimeout(sceneTimer); }

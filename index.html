@@ -387,7 +387,9 @@ function applyVoicePhase(){
   if(currentPhase === 'night'){ setVoiceMuted(true); el('voiceSub').innerText = '🌙 Malam hari - Voice auto-mute biar gak ketauan role!'; }
 }
 function toggleAdMini(where){ let body=el('adMiniBody'+where); let btn=el('adToggle'+where); let isOpen=body.classList.contains('open'); if(isOpen){ body.classList.remove('open'); btn.innerText='+ Buka'; } else { body.classList.add('open'); btn.innerText='- Tutup'; } }
+function updateAdPanels(){ let show=isHostNow; el('adPanelLobby').style.display=show?'block':'none'; el('adPanelGame').style.display=(show && el('gameScreen').style.display!=='none')?'block':'none'; }
 function onAdFile(input, previewId){
+  function onAdFile(input, previewId){
   let file = input.files && input.files[0]; if(!file) return;
   if(!file.type.startsWith('image/')) return alert('Pilih file gambar ya! (JPG / PNG)');
   let reader = new FileReader();

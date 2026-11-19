@@ -8,7 +8,7 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const { createClient } = require('@supabase/supabase-js');
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+const supabase = createClient(process.env.https://iisxxgaihgtcuzynjcus.supabase.co/rest/v1/, process.env.sb_publishable_y2IpdW-81zOi5qha15J0Ew_OTmhdrNA);
 
 const app = express();
 app.use(cors());

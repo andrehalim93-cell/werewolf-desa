@@ -27,7 +27,8 @@ app.post('/api/register', async (req, res) => {
     const { data: exist } = await supabase.from('werewolf_users').select('id').eq('id', id).maybeSingle();
     if(exist) return res.json({ ok:false, msg:'ID udah dipake!' });
     const hash = await bcrypt.hash(password, 10);
-    const { error } = await supabase.from('werewolf_users').insert({ id, password: hash, display_name: display_name || id, avatar: '🧑' });
+    const { id, password, display_name, avatar } = req.body || {};
+const { error } = await supabase.from('werewolf_users').insert({ id, password: hash, display_name: display_name || id, avatar: avatar || '🧑' });
     if(error) return res.json({ ok:false, msg: error.message });
     res.json({ ok:true, msg:'Daftar berhasil! Silahkan login' });
   } catch(e){ res.json({ ok:false, msg: e.message }); }

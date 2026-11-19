@@ -410,7 +410,26 @@ function setVoiceMuted(m, fromPTT){
 function toggleMute(){ setVoiceMuted(!voiceMuted); }
 function createPeer(targetId){
   if(voicePeers[targetId]) return voicePeers[targetId];
-  let pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+  let pc = new RTCPeerConnection({
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    {
+      urls: 'turn:openrelay.metered.ca:80',
+      username: 'a49bd4c299dccb05d5058276',
+      credential: '0Bo/BhhMRdcKDhqc'
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443',
+      username: 'a49bd4c299dccb05d5058276',
+      credential: '0Bo/BhhMRdcKDhqc'
+    },
+    {
+      urls: 'turns:openrelay.metered.ca:443?transport=tcp',
+      username: 'a49bd4c299dccb05d5058276',
+      credential: '0Bo/BhhMRdcKDhqc'
+    }
+  ]
+})
   if(localStream) localStream.getTracks().forEach(t=>pc.addTrack(t, localStream));
   pc.onicecandidate = e => { if(e.candidate) socket.emit('voice-ice', { to: targetId, candidate: e.candidate }); };
   pc.ontrack = e => { let audioId = 'audio-'+targetId; let old = document.getElementById(audioId); if(old) old.remove(); let a = document.createElement('audio'); a.id = audioId; a.autoplay = true; a.playsInline = true; a.muted = false; a.volume = 1; a.srcObject = e.streams[0]; document.getElementById('voiceAudios').appendChild(a); a.play().catch(()=>{ document.addEventListener('click', ()=>a.play(), {once:true}); }); };

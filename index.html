@@ -268,6 +268,14 @@ input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;b
 .lobbyChatInputRow input{flex:1;background:#1e1b33;border:1px solid rgba(255,255,255,.15);color:#fff;padding:11px 14px;border-radius:999px;outline:none;font-size:13px}
 .lobbySendBtn{width:42px;height:42px;border:none;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#facc15);font-size:16px;cursor:pointer}
 .voteBtn.selected{border-color:#facc15 !important;background:rgba(250,204,21,.2) !important;box-shadow:0 0 0 2px #facc15 !important}
+input[type=password]{width:100%;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.35);color:#fff;font-size:14px;margin-bottom:10px}
+.rememberRow{display:flex;align-items:center;gap:8px;font-size:12px;color:#d8c8f0;margin:6px 0 10px;cursor:pointer}
+.rememberRow input{width:18px;height:18px;accent-color:#a855f7;cursor:pointer}
+.authTabs{display:flex;gap:8px;margin-bottom:12px}
+.authTabs button{flex:1;padding:11px;border-radius:12px;font-weight:800;font-size:13px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.15)}
+.authTabs button.on{background:linear-gradient(90deg,#7c3aed,#ec4899);border-color:transparent}
+#authMsg{font-size:12px;text-align:center;margin-top:8px;min-height:16px}
+#userBar{display:none;align-items:center;justify-content:space-between;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);padding:10px 12px;border-radius:14px;margin-bottom:12px;font-size:13px}
 </style>
 </head>
 <body>
@@ -279,7 +287,27 @@ input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;b
 <div class="wrap">
 <div class="topBrand"><div class="logo">🐺</div><h1>DESA TERKUTUK</h1><p>SIAPA SERIGALA DI ANTARA KITA?</p><div style="margin-top:8px"><span class="pill">🎙️ Narator Mbah Kromo</span> <span class="pill">✨ V11</span></div></div>
 <div id="connStatus">🔴 Belum nyambung ke server... tunggu / cek node server.js</div>
-<div id="homeScreen"><div class="homeWrap"><div class="card"><div style="text-align:center;font-size:12px;color:#d8c8f0;margin-bottom:12px">Masukin nama kamu dulu...</div><input type="text" id="nameInput" placeholder="Nama kamu..." maxlength="15" autocomplete="off"><input type="text" id="codeInput" placeholder="Kode Desa" maxlength="4" style="text-transform:uppercase" autocomplete="off"><div class="row2"><button class="btn btn-primary" id="btnCreate" onclick="createRoom()">🏠 BUAT DESA</button><button class="btn btn-dark" id="btnJoin" onclick="joinRoom()">🚪 GABUNG</button></div><div id="homeError" style="display:none;color:#ff6a6a;font-size:12px;text-align:center;margin-top:10px"></div><button class="btn btn-dark" style="margin-top:10px" onclick="openRules()">📜 LIHAT RULES DULU</button></div></div></div>
+<div id="userBar"><span>👋 Halo, <b id="userBarName"></b> <small id="userBarId" style="color:#b9a5d6"></small></span><button class="btn btn-dark btn-small" onclick="doLogout()">Keluar</button></div>
+
+<div id="homeScreen"><div class="homeWrap"><div class="card" id="authCard">
+<div style="text-align:center;font-size:12px;color:#d8c8f0;margin-bottom:12px">Login dulu biar ID kamu ke-save kayak Mahjong...</div>
+<div class="authTabs"><button id="tabLogin" class="on" onclick="switchAuth('login')">🔑 LOGIN</button><button id="tabReg" onclick="switchAuth('reg')">📝 DAFTAR</button></div>
+<input type="text" id="authId" placeholder="ID Kamu (3-20 huruf, tanpa spasi)" maxlength="20" autocomplete="off">
+<input type="password" id="authPass" placeholder="Password (minimal 4)" autocomplete="off">
+<input type="text" id="authName" placeholder="Nama di game (buat Daftar aja)" maxlength="15" autocomplete="off" style="display:none">
+<label class="rememberRow"><input type="checkbox" id="rememberMe" checked> ✅ Ingat ID & Password saya (kayak Mahjong)</label>
+<button class="btn btn-primary" id="authBtn" onclick="doAuth()">🔑 LOGIN</button>
+<div id="authMsg"></div>
+</div>
+
+<div class="card" id="playCard" style="display:none">
+<div style="text-align:center;font-size:12px;color:#d8c8f0;margin-bottom:12px">Masukin Kode Desa...</div>
+<input type="text" id="nameInput" placeholder="Nama kamu..." maxlength="15" autocomplete="off" style="display:none">
+<input type="text" id="codeInput" placeholder="Kode Desa" maxlength="4" style="text-transform:uppercase" autocomplete="off">
+<div class="row2"><button class="btn btn-primary" id="btnCreate" onclick="createRoom()">🏠 BUAT DESA</button><button class="btn btn-dark" id="btnJoin" onclick="joinRoom()">🚪 GABUNG</button></div>
+<div id="homeError" style="display:none;color:#ff6a6a;font-size:12px;text-align:center;margin-top:10px"></div>
+<button class="btn btn-dark" style="margin-top:10px" onclick="openRules()">📜 LIHAT RULES DULU</button>
+</div></div></div>
 <div id="lobbyScreen" style="display:none"><div class="lobbyWrap"><div class="card" style="text-align:center"><div style="font-size:11px;letter-spacing:2px;color:#b9a5d6">KODE DESA KAMU</div><div class="codeBig" id="roomCodeBig">----</div><button class="btn btn-dark btn-small" style="margin-top:8px" onclick="copyCode()">📋 Salin Kode</button></div><div class="card"><div class="cardTitle">👥 WARGA DESA <span id="lobbyCount"></span></div><div id="playerList"></div></div>
 <div class="lobbyChatCard">
   <div class="lobbyChatHead">💬 <b>Chat Lobby</b> <span id="lobbyChatCount">0 orang di sini</span></div>
@@ -662,6 +690,77 @@ function closeScene(){
 function drawAnalogClock(s,total){ const c=el('analogClock'); if(!c) return; const ctx=c.getContext('2d'); ctx.clearRect(0,0,110,110); ctx.save(); ctx.translate(55,55); ctx.beginPath(); ctx.arc(0,0,50,0,2*Math.PI); ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=2; ctx.stroke(); for(let i=0;i<12;i++){ ctx.rotate(Math.PI/6); ctx.beginPath(); ctx.moveTo(0,-46); ctx.lineTo(0,-50); ctx.strokeStyle='#a855f7'; ctx.lineWidth=i%3===0?2:1; ctx.stroke(); } ctx.rotate(-(12*Math.PI/6)); let ang=((total-s)/total)*2*Math.PI-Math.PI/2; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(48*Math.cos(ang),48*Math.sin(ang)); ctx.strokeStyle=s<10?'#ff2a2a':'#ec4899'; ctx.lineWidth=3; ctx.stroke(); ctx.beginPath(); ctx.arc(0,0,4,0,2*Math.PI); ctx.fillStyle='#fff'; ctx.fill(); ctx.restore(); }
 socket.on('timer', d=>{ el('timerPhase').innerText=d.type==='night'?'🌙 MALAM - WEREWOLF BERBURU':'☀️ SIANG - VOTE GANTUNG'; el('timerDigital').innerText=d.timeLeft; el('timerFill').style.width='100%'; drawAnalogClock(d.timeLeft,d.total); });
 socket.on('timerTick', d=>{ el('timerDigital').innerText=d.timeLeft; let total=d.type==='night'?hostConfig.nightTime:hostConfig.dayTime; el('timerFill').style.width=(d.timeLeft/total*100)+'%'; drawAnalogClock(d.timeLeft,total); });
+// ===== AUTH ALA MAHJONG - INGAT ID & PASS =====
+let AUTH_MODE = 'login';
+let MY_ACCOUNT = null;
+function switchAuth(mode){
+  AUTH_MODE = mode;
+  document.getElementById('tabLogin').classList.toggle('on', mode==='login');
+  document.getElementById('tabReg').classList.toggle('on', mode==='reg');
+  document.getElementById('authName').style.display = mode==='reg' ? 'block' : 'none';
+  document.getElementById('authBtn').innerText = mode==='reg' ? '📝 DAFTAR SEKARANG' : '🔑 LOGIN';
+  document.getElementById('authMsg').innerText = '';
+}
+async function doAuth(){
+  let id = document.getElementById('authId').value.trim();
+  let pass = document.getElementById('authPass').value;
+  let name = document.getElementById('authName').value.trim() || id;
+  let msg = document.getElementById('authMsg');
+  if(!id || id.length < 3) return msg.innerText = '❌ ID minimal 3 karakter!';
+  if(!pass || pass.length < 4) return msg.innerText = '❌ Password minimal 4 karakter!';
+  msg.innerText = '⏳ Tunggu...';
+  let url = AUTH_MODE==='reg' ? '/api/register' : '/api/login';
+  let body = AUTH_MODE==='reg' ? {id, password:pass, display_name:name} : {id, password:pass};
+  try{
+    let r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    let d = await r.json();
+    if(!d.ok) return msg.innerText = '❌ ' + d.msg;
+    if(AUTH_MODE==='reg'){ msg.innerText = '✅ ' + d.msg + ' - Sekarang LOGIN!'; switchAuth('login'); return; }
+    // LOGIN BERHASIL
+    MY_ACCOUNT = d.user;
+    // INGAT ID & PASS - kayak Mahjong
+    if(document.getElementById('rememberMe').checked){
+      localStorage.setItem('werewolf_saved_id', id);
+      localStorage.setItem('werewolf_saved_pass', pass);
+      localStorage.setItem('werewolf_remember', '1');
+    } else {
+      localStorage.removeItem('werewolf_saved_id');
+      localStorage.removeItem('werewolf_saved_pass');
+      localStorage.removeItem('werewolf_remember');
+    }
+    localStorage.setItem('werewolf_last_id', id);
+    afterLogin();
+  }catch(e){ msg.innerText = '❌ Gagal nyambung ke server!'; }
+}
+function afterLogin(){
+  document.getElementById('authCard').style.display = 'none';
+  document.getElementById('playCard').style.display = 'block';
+  document.getElementById('userBar').style.display = 'flex';
+  document.getElementById('userBarName').innerText = MY_ACCOUNT.display_name || MY_ACCOUNT.id;
+  document.getElementById('userBarId').innerText = '(@' + MY_ACCOUNT.id + ')';
+  // Nama di game otomatis pake akun login, biar gak bisa nyamar
+  let ni = document.getElementById('nameInput'); if(ni) ni.value = MY_ACCOUNT.display_name || MY_ACCOUNT.id;
+}
+function doLogout(){
+  MY_ACCOUNT = null;
+  localStorage.removeItem('werewolf_saved_id');
+  localStorage.removeItem('werewolf_saved_pass');
+  localStorage.removeItem('werewolf_remember');
+  document.getElementById('authCard').style.display = 'block';
+  document.getElementById('playCard').style.display = 'none';
+  document.getElementById('userBar').style.display = 'none';
+  document.getElementById('authPass').value = '';
+  document.getElementById('authMsg').innerText = '👋 Udah logout, data ingatan dihapus.';
+}
+// AUTO-ISI PAS BUKA WEB - kayak Mahjong
+(function autoFill(){
+  let savedId = localStorage.getItem('werewolf_saved_id');
+  let savedPass = localStorage.getItem('werewolf_saved_pass');
+  let remember = localStorage.getItem('werewolf_remember');
+  if(savedId) document.getElementById('authId').value = savedId;
+  if(remember==='1' && savedPass) document.getElementById('authPass').value = savedPass;
+  if(remember==='1') document.getElementById('rememberMe').checked = true;
+})();
 window.onload=()=>{ let bgm=el('bgm'); if(!bgm){ musicOn=false; return; } bgm.volume=0.12; bgm.play().catch(()=>{ musicOn=false; el('musicCtrl').innerText='🔇 MUSIK OFF'; }); };
 </script>
 </body>

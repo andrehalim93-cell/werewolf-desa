@@ -351,9 +351,13 @@ const RULES = {
 };
 function openRules(){ let r=RULES[myRole]||null; let title=r?`${r.emoji} KAMU ADALAH ${r.name.toUpperCase()}`:'📜 RULES GAME - DESA TERKUTUK'; let content=''; if(r){ content=`<div class="ruleItem" style="border:1px solid #facc15"><b>🎯 TUGAS KAMU:</b><br>${r.task}</div><div class="ruleItem" style="border:1px solid #22c55e"><b>🏆 KONDISI MENANG:</b><br>${r.win}</div><div class="ruleItem"><b>💡 TIPS MBAH KROMO:</b><br>${r.tip}</div>`; } else content=`<div class="ruleItem">Belum dapet role? Rules umum dulu ya...</div>`; content+=`<div style="font-family:Cinzel;font-size:13px;margin:14px 0 6px">📖 SEMUA ROLE:</div>`+Object.values(RULES).map(x=>`<div class="ruleItem"><b>${x.emoji} ${x.name}:</b> ${x.task.split('.')[0]}.<br><span style="color:#22c55e">Menang: ${x.win}</span></div>`).join(''); el('rulesTitle').innerText=title; el('rulesContent').innerHTML=content; el('rulesModal').classList.add('show'); }
 function closeRules(){ el('rulesModal').classList.remove('show'); }
-function showVoiceBar(){ if(myCode) el('voiceBar').style.display='flex'; }
+function showVoiceBar(){ applyVoicePhase(); }
 function updateVoiceUI(){
-  let btn = el('voiceMainBtn'), muteBtn = el('voiceMuteBtn'), pttBtn = el('pttModeBtn');
+  function updateVoiceUI(){
+  let btn = el('voiceMainBtn');
+  if(!btn) return;
+  let muteBtn = el('voiceMuteBtn'), pttBtn = el('pttModeBtn');
+  if(pttBtn) pttBtn.className = 'voiceBtn ' + (pttMode ? 'on' : 'off');
   pttBtn.innerText = pttMode ? '🎙️ PTT: ON' : '🎙️ PTT: OFF';
   pttBtn.className = 'voiceBtn ' + (pttMode ? 'on' : 'off');
   el('voiceBar').classList.toggle('ptt-active', voiceOn && pttMode);
@@ -448,7 +452,6 @@ function startSpeakingDetection(){
 }
 document.addEventListener('DOMContentLoaded', ()=>{
   let btn = el('voiceMainBtn'); if(!btn) return;
-  btn.addEventListener('click', ()=>{ if(!voiceOn) toggleVoice(); else if(!pttMode) toggleVoice(); });
   btn.addEventListener('touchcancel', ()=>{ if(voiceOn && pttMode) setPTTHolding(false); });
   btn.addEventListener('mousedown', ()=>{ if(voiceOn && pttMode) setPTTHolding(true); });
   btn.addEventListener('mouseup', ()=>{ if(voiceOn && pttMode) setPTTHolding(false); });
@@ -463,14 +466,32 @@ socket.on('voice-answer', async d => { let pc = voicePeers[d.from]; if(pc) await
 socket.on('voice-ice', async d => { let pc = voicePeers[d.from]; if(pc && d.candidate) try{ await pc.addIceCandidate(new RTCIceCandidate(d.candidate)); }catch(e){} });
 socket.on('voice-speaking', d => { if(voiceNames[d.id]){ voiceNames[d.id].speaking = d.speaking; } else { voiceNames[d.id] = { name: d.name || 'Pemain', speaking: d.speaking }; } updateVoiceUI(); });
 async function applyVoicePhase(){
+  let bar = document.getElementById('voiceBar');
+  if(!bar) return;
+
+  // 1. LOBBY / BELUM MAIN -> SEMBUNYI TOTAL
+  if(!myCode || currentPhase === 'lobby' || currentPhase === 'waiting' || !currentPhase){
+    bar.style.display = 'none';
+    return;
+  }
+
+  // 2. MALAM -> SEMBUNYI JUGA, auto mute
   if(currentPhase === 'night'){
+    bar.style.display = 'none';
     if(voiceOn) setVoiceMuted(true);
     return;
   }
-  if(currentPhase === 'day'){
+
+  // 3. PAGI / VOTING -> BARU MUNCUL
+  if(currentPhase === 'day' || currentPhase === 'voting' || currentPhase === 'discussion'){
+    bar.style.display = 'flex';
     if(!voiceOn) await toggleVoice();
     else setVoiceMuted(voiceUserMuted);
+    return;
   }
+
+  // Kalau fase lain yang gak dikenal, sembunyiin aja biar aman
+  bar.style.display = 'none';
 }
 function toggleAdMini(where){ let body=el('adMiniBody'+where); let btn=el('adToggle'+where); let isOpen=body.classList.contains('open'); if(isOpen){ body.classList.remove('open'); btn.innerText='+ Buka'; } else { body.classList.add('open'); btn.innerText='- Tutup'; } }
 function updateAdPanels(){ let show=isHostNow; el('adPanelLobby').style.display=show?'block':'none'; el('adPanelGame').style.display=(show && el('gameScreen').style.display!=='none')?'block':'none'; }

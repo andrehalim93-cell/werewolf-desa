@@ -105,7 +105,8 @@ io.on('connection', socket => {
   });
 
   // ========== PLAY AGAIN - FIX UTAMA: GAK NYANGKUT DI HOST ==========
-  socket.on('playAgain', ({ code }) => {
+  socket.on('playAgain', (data) => {
+  let code = data.code;
     let room = ROOMS[code];
     if (!room) return;
     // FIX: Jangan cek phase !== 'ended' - biar Host bisa balik kapan aja

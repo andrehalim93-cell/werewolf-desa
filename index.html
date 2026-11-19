@@ -353,21 +353,18 @@ function openRules(){ let r=RULES[myRole]||null; let title=r?`${r.emoji} KAMU AD
 function closeRules(){ el('rulesModal').classList.remove('show'); }
 function showVoiceBar(){ applyVoicePhase(); }
 function updateVoiceUI(){
-  function updateVoiceUI(){
   let btn = el('voiceMainBtn');
   if(!btn) return;
   let muteBtn = el('voiceMuteBtn'), pttBtn = el('pttModeBtn');
   if(pttBtn) pttBtn.className = 'voiceBtn ' + (pttMode ? 'on' : 'off');
-  pttBtn.innerText = pttMode ? '🎙️ PTT: ON' : '🎙️ PTT: OFF';
-  pttBtn.className = 'voiceBtn ' + (pttMode ? 'on' : 'off');
   el('voiceBar').classList.toggle('ptt-active', voiceOn && pttMode);
   if(!voiceOn){
     btn.className='voiceBtn off'; btn.innerText='🎤 NYALAIN VOICE'; btn.classList.remove('ptt-hold','ptt-idle');
-    el('voiceStatus').innerText='🎤 Voice OFF'; el('voiceSub').innerText='Klik NYALAIN buat ngobrol suara'; muteBtn.style.display='none';
+    el('voiceStatus').innerText='🎤 Voice OFF'; el('voiceSub').innerText='Klik NYALAIN buat ngobrol suara'; if(muteBtn) muteBtn.style.display='none';
   } else if(pttMode){
     if(pttHolding){ btn.className='voiceBtn ptt-hold'; btn.innerText='🟢 LAGI NGOMONG... LEPAS BUAT DIEM'; el('voiceStatus').innerText='🟢 Lagi Ngomong (PTT)'; el('voiceSub').innerText='Lepas tombol buat mute lagi'; }
     else { btn.className='voiceBtn ptt-idle'; btn.innerText='🎙️ TAHAN BUAT NGOMONG'; el('voiceStatus').innerText='🎙️ PTT Siap - Tahan tombol buat ngomong'; el('voiceSub').innerText='Mic ke-mute, tahan tombol biar kedengeran'; }
-    muteBtn.style.display='none';
+    if(muteBtn) muteBtn.style.display='none';
   } else if(voiceMuted){
     btn.className='voiceBtn muted'; btn.innerText='🔇 VOICE MATI - KLIK BUAT MATIIN'; el('voiceStatus').innerText='🔇 Voice MATIIN (Mute)'; el('voiceSub').innerText='Kamu di-mute, orang lain gak denger kamu'; muteBtn.style.display='block'; muteBtn.innerText='🔇';
   } else {

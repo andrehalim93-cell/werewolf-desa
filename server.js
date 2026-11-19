@@ -1,132 +1,289 @@
+// server.js - WEREWOLF FULL - copy paste utuh
 require('dotenv').config();
-const express = require('express'), http = require('http'), socketIo = require('socket.io'), cors = require('cors'), path = require('path');
-const app = express(); app.use(cors()); app.use(express.json());
+const express = require('express');
+const http = require('http');
+const socketIo = require('socket.io');
+const cors = require('cors');
+const path = require('path');
+const bcrypt = require('bcryptjs');
+const { createClient } = require('@supabase/supabase-js');
+
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+
+const app = express();
+app.use(cors());
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-app.get('/api/ai-story', (req, res) => res.json({ ai: false }));
 app.get('/health', (req, res) => res.send('OK'));
 app.get('/ping', (req, res) => res.send('pong'));
+
+// ===== AUTH - WEREWOLF - tabel werewolf_users =====
+app.post('/api/register', async (req, res) => {
+  try {
+    const { id, password, display_name } = req.body || {};
+    if(!id || id.length < 3 || id.length > 20) return res.json({ ok:false, msg:'ID harus 3-20 karakter' });
+    if(!password || password.length < 4) return res.json({ ok:false, msg:'Password minimal 4 karakter' });
+    const { data: exist } = await supabase.from('werewolf_users').select('id').eq('id', id).maybeSingle();
+    if(exist) return res.json({ ok:false, msg:'ID udah dipake!' });
+    const hash = await bcrypt.hash(password, 10);
+    const { error } = await supabase.from('werewolf_users').insert({ id, password: hash, display_name: display_name || id, avatar: '🧑' });
+    if(error) return res.json({ ok:false, msg: error.message });
+    res.json({ ok:true, msg:'Daftar berhasil! Silahkan login' });
+  } catch(e){ res.json({ ok:false, msg: e.message }); }
+});
+
+app.post('/api/login', async (req, res) => {
+  try {
+    const { id, password } = req.body || {};
+    const { data: user } = await supabase.from('werewolf_users').select('*').eq('id', id).maybeSingle();
+    if(!user) return res.json({ ok:false, msg:'ID gak ketemu' });
+    const cocok = await bcrypt.compare(password || '', user.password || '');
+    if(!cocok) return res.json({ ok:false, msg:'Password salah!' });
+    delete user.password;
+    res.json({ ok:true, user });
+  } catch(e){ res.json({ ok:false, msg: e.message }); }
+});
+
+app.get('/api/leaderboard', async (req, res) => {
+  const { data } = await supabase.from('werewolf_users').select('id, display_name, avatar, win, wolf_win, villager_win, games').order('win', { ascending:false }).limit(20);
+  res.json(data || []);
+});
+
+app.post('/api/change-avatar', async (req, res) => {
+  const { id, avatar } = req.body || {};
+  const { error } = await supabase.from('werewolf_users').update({ avatar }).eq('id', id);
+  if(error) return res.json({ ok:false, msg: error.message });
+  res.json({ ok:true });
+});
+
+// ===== LOBBY PUBLIC / PRIVATE =====
+let publicRooms = {};
+app.get('/api/rooms', (req,res)=>{
+  const list = Object.values(publicRooms).filter(r=>!r.isPrivate).map(r=>({ code:r.code, name:r.name, host:r.host, count:r.players.length, maxPlayers:r.maxPlayers, createdAt:r.createdAt }));
+  res.json(list);
+});
+
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: { origin: "*" },
   pingInterval: 25000,
   pingTimeout: 60000,
   transports: ["websocket", "polling"],
-  maxHttpBufferSize: 10 * 1024 * 1024 // 10MB - biar iklan gak ke-tolak
+  maxHttpBufferSize: 10 * 1024 * 1024
 });
+
 const ROOMS = {};
 const ALL_ROLES = {
-  villager: { emoji: '👨‍🌾', name: 'Villager', desc: 'Warga biasa. Siang hari vote gantung yang dicurigai.', color: '#8a8a8a', night: false },
-  werewolf: { emoji: '🐺', name: 'Werewolf', desc: 'Malam hari pilih 1 mangsa untuk dibunuh bareng werewolf lain.', color: '#ff4a4a', night: true },
+  villager: { emoji: '👨‍🌾', name: 'Villager', desc: 'Warga biasa. Siang vote gantung yang dicurigai.', color: '#8a8a8a', night: false },
+  werewolf: { emoji: '🐺', name: 'Werewolf', desc: 'Malam pilih 1 mangsa untuk dibunuh bareng wolf lain.', color: '#ff4a4a', night: true },
   seer: { emoji: '🔮', name: 'Seer', desc: 'Intip role 1 orang.', color: '#6d4aff', night: true },
-  doctor: { emoji: '💉', name: 'Doctor', desc: 'Heal 1 orang. Boleh jaga diri sendiri. Kamu TIDAK mati kalau berhasil nyelametin.', color: '#4aff8a', night: true },
-  alpha: { emoji: '👑', name: 'Alpha Wolf', desc: 'Bos werewolf. Votenya 2x saat pilih mangsa.', color: '#ff2a2a', night: true },
-  bodyguard: { emoji: '🛡️', name: 'Bodyguard', desc: 'Jaga 1 orang. GAK boleh jaga diri sendiri & GAK boleh jaga orang yang sama 2 malam berturut-turut. Kalau dia diserang, KAMU MATI gantiin dia.', color: '#4a8aff', night: true },
+  doctor: { emoji: '💉', name: 'Doctor', desc: 'Heal 1 orang.', color: '#4aff8a', night: true },
+  alpha: { emoji: '👑', name: 'Alpha Wolf', desc: 'Bos werewolf. Vote mangsa 2x.', color: '#ff2a2a', night: true },
+  bodyguard: { emoji: '🛡️', name: 'Bodyguard', desc: 'Jaga 1 orang. Kalau dia diserang, kamu mati gantiin.', color: '#4a8aff', night: true },
   mayor: { emoji: '🎩', name: 'Mayor', desc: 'Vote siang 2x.', color: '#ffd700', night: false },
-  witch: { emoji: '🧙', name: 'Witch', desc: 'Punya 1x Heal & 1x Poison. Sekali pakai saja.', color: '#9d4aff', night: true },
-  cupid: { emoji: '💘', name: 'Cupid', desc: 'Malam pertama jodohkan 2 lovers. Kalau 1 mati, 1 ikut mati.', color: '#ff4ab2', night: true },
-  jester: { emoji: '🤡', name: 'Jester', desc: 'Menang jika digantung siang hari.', color: '#ffaa00', night: false }
+  witch: { emoji: '🧙', name: 'Witch', desc: 'Punya 1x Heal & 1x Poison.', color: '#9d4aff', night: true },
+  cupid: { emoji: '💘', name: 'Cupid', desc: 'Malam pertama jodohkan 2 lovers.', color: '#ff4ab2', night: true },
+  jester: { emoji: '🤡', name: 'Jester', desc: 'Menang jika digantung siang hari.', color: '#ffaa00', night: false },
+  hunter: { emoji: '🏹', name: 'Hunter', desc: 'Kalau mati, boleh tembak 1 orang ikut mati.', color: '#ff7a00', night: false },
+  traitor: { emoji: '🎭', name: 'Traitor', desc: 'Warga palsu. Menang bareng Werewolf. Seer ngeliat kamu sebagai Villager.', color: '#c44aff', night: false },
+  silencer: { emoji: '🤫', name: 'Silencer', desc: 'Malam pilih 1 orang. Besok siang dia gak bisa chat.', color: '#00d1ff', night: true }
 };
-const DEFAULT_CONFIG = { wolfCount: 1, enabledRoles: { villager: true, werewolf: true, seer: true, doctor: true, mayor: false, alpha: false, bodyguard: false, witch: false, cupid: false, jester: false }, nightTime: 35, dayTime: 45 };
-function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+const DEFAULT_CONFIG = { wolfCount: 1, nightTime: 60, dayTime: 120, enabledRoles: { villager:true, werewolf:true, seer:true, doctor:true, alpha:false, bodyguard:false, mayor:false, witch:false, cupid:false, jester:false, hunter:false, traitor:false, silencer:false } };
 const NARATOR = {
-  start: ["🌕 Malam pertama... Kabut turun pelan-pelan menutupi Desa Terkutuk. Dari kejauhan, terdengar lolongan... AUUUUU... Mbah Kromo merinding. 'Nak... malam ini, jangan ada yang keluar rumah. Ada yang lapar di hutan...'", "🌑 Gerbang desa TERKUNCI! Angin berhenti. Jangkrik pun diam. Mbah Kromo berbisik, 'Dengar baik-baik... di antara kalian, ada yang bukan manusia. Dia menyamar... dia tersenyum... dan malam ini, dia akan MEMBURU.'", "🐺 BULAN PURNAMA! Cahaya merah membelah langit. Mbah Kromo menutup jendelanya rapat-rapat. 'Cepat tidur, nak! Kalau kau dengar ada yang mengetuk pintu jam 12 malam... JANGAN DIBUKA! Itu bukan tetanggamu...'"],
-  night: ["🌙 Malam sunyi... Semua lampu padam. Hanya suara detak jantung yang terdengar. Para pemburu mulai bergerak dalam gelap...", "🌙 Hening... Bahkan anjing desa pun tak berani menggonggong malam ini. Ada yang berjalan di antara rumah-rumah... mengendus... mencari mangsa...", "🌙 Angin dingin masuk lewat celah jendela. Mbah Kromo berbisik, 'Tidurlah... tapi jangan terlalu nyenyak. Karena yang terjaga malam ini, bukan cuma kamu...'"],
-  dayDeath: (nama, role) => pick([`☀️ PAGI BERDARAH! Warga berteriak histeris! Tubuh ${nama} ditemukan di tengah alun-alun... penuh bekas cakaran! Mbah Kromo menggeleng, 'Ternyata dia adalah ${role}... sayang sekali, nak...'`, `☀️ JERITAN MEMECAH PAGI! ${nama} ditemukan tak bernyawa di depan sumur tua! Jejak kaki serigala masih basah di tanah... Warga gemetar. 'Dia ${role}... kenapa harus dia?'`, `☀️ Pagi ini... desa kehilangan satu nyawa lagi. ${nama} tergeletak kaku, matanya masih terbuka lebar, seperti melihat sesuatu yang mengerikan sebelum mati. Di dadanya tertulis: ${role}.`]),
-  dayPeace: ["☀️ Pagi yang aneh... Tidak ada yang mati! Matahari terbit dengan malu-malu. Mbah Kromo tersenyum, 'Hmm... si pemburu gagal malam ini. Atau... dia sedang bermain-main dengan kita?'", "☀️ Warga membuka pintu perlahan... Satu... dua... semua masih hidup! Tapi kenapa udara pagi ini terasa lebih dingin? Mbah Kromo berbisik, 'Jangan senang dulu... dia cuma lagi nunggu momen yang pas.'", "☀️ TIDAK ADA KORBAN! Desa bersorak lega. Tapi Mbah Kromo justru makin cemas, 'Kalau tidak ada yang mati... berarti si serigala sengaja membiarkan kita hidup. Dia lagi menikmati ketakutan kita...'"],
-  daySaved: (nama) => pick([`☀️ KEAJAIBAN! 1 warga seharusnya sudah mati malam tadi! Tapi dia bangun dengan selamat! Ada yang melindunginya dalam gelap... Siapa pahlawan diam-diam ini?`, `☀️ Pagi ini 1 warga masih bisa sarapan! Padahal semalam, cakar serigala sudah nyaris menyentuh lehernya... Seseorang telah mempertaruhkan nyawanya untuk menyelamatkan 1 warga!`]),
-  lynch: (nama, role) => pick([`🪓 WARGA MURKA! Tali melingkar di leher ${nama}! Dia berteriak, 'BUKAN AKU! BUKAN AKU!' Tapi sudah terlambat... KRAK! Dan setelah dia tergantung, barulah semua tau... dia adalah ${role}...`, `🪓 Suara palu hakim diketuk! ${nama} diseret ke tiang gantungan! 'KALIAN SEMUA AKAN MENYESAL!' teriaknya terakhir kali. Hening... Dan ternyata... ${nama} adalah ${role}. Desa terdiam.`, `🪓 Air mata... teriakan... ${nama} digantung di depan semua orang. Saat tubuhnya berhenti bergerak, Mbah Kromo membuka surat di sakunya, 'Astagfirullah... kita salah orang, nak. Dia ${role}...'`]),
-  noLynch: ["🌙 Tidak ada yang digantung hari ini. Warga saling curiga, saling tuduh, tapi tak ada yang berani memutuskan. Mbah Kromo menghela napas, 'Ketakutan membuat kita buta... dan si serigala suka itu.'", "🌙 Voting berakhir tanpa hasil. Semua saling menatap curiga. Malam kembali turun... dan pemburu kembali lapar..."],
-  winVillager: ["🎉 Fajar akhirnya datang! Serigala terakhir tumbang! Desa Terkutuk bebas! Mbah Kromo menangis haru, 'Akhirnya... setelah bertahun-tahun... kita bisa tidur nyenyak lagi, nak. Kalian semua adalah PAHLAWAN!'", "🎉 TERIAKAN KEMENANGAN! Tidak ada lagi lolongan di malam hari! Warga berpelukan, api unggun dinyalakan. Mbah Kromo tersenyum, 'Desa ini selamat karena kalian berani... berani curiga, berani melawan!'"],
-  winWolf: ["🐺 GELAP MENANG... Bulan merah menyala. Desa Terkutuk kini milik para serigala. Mbah Kromo berbisik terakhir kali, 'Maafkan Mbah, nak... Mbah gagal menjaga kalian... LARI! Kalau kalian masih bisa lari...'", "🐺 Hening... Tidak ada lagi yang bisa melawan. Satu per satu lampu padam. Lolongan kemenangan menggema di seluruh desa. Malam ini, serigala yang berkuasa. Selamanya."]
+  winWolf: ['🐺 Serigala menguasai desa!', '🌕 Malam abadi. Desa kalah!'],
+  winVillager: ['🎉 Desa menang! Serigala musnah!', '☀️ Matahari terbit, desa aman!'],
+  night: ['🌙 Malam tiba... tutup mata kalian...', '🦉 Hening... semua tertidur...'],
+  noLynch: ['Tidak ada yang digantung hari ini.', 'Desa masih ragu...'],
+  lynch: (n, r) => `⚰️ ${n} digantung! Dia adalah ${r}.`
 };
-function sanitizeConfig(input){ let base = JSON.parse(JSON.stringify(DEFAULT_CONFIG)); if(!input || typeof input !== 'object') return base; let wolfCount = parseInt(input.wolfCount); if(!isNaN(wolfCount)) base.wolfCount = Math.max(1, Math.min(3, wolfCount)); let night = parseInt(input.nightTime); if(!isNaN(night)) base.nightTime = Math.max(10, Math.min(120, night)); let day = parseInt(input.dayTime); if(!isNaN(day)) base.dayTime = Math.max(10, Math.min(120, day)); if(input.enabledRoles && typeof input.enabledRoles === 'object'){ for(let k in base.enabledRoles){ if(typeof input.enabledRoles[k] === 'boolean') base.enabledRoles[k] = input.enabledRoles[k]; } base.enabledRoles.villager = true; base.enabledRoles.werewolf = true; } return base; }
-function cleanName(n){ return String(n || '').trim().slice(0, 15); }
-function checkWinner(room){ let alive = room.players.filter(p => p.alive); let wolves = alive.filter(p => ['werewolf', 'alpha'].includes(p.role)).length; let vill = alive.length - wolves; if (wolves === 0) return 'villagers'; if (wolves >= vill) return 'werewolves'; return null; }
-function killPlayer(room, player, cause){ if (!player || !player.alive) return; player.alive = false; room.log.push(`💀 ${player.name} mati (${cause}) - Role: ${player.role}`); if (player.lover){ let lover = room.players.find(p => p.name === player.lover && p.alive); if (lover){ lover.alive = false; room.log.push(`💘 ${lover.name} ikut mati karena LOVER-nya ${player.name} mati!`); } } }
-function endGame(room, winner, message){ clearInterval(room.timerInt); room.phase = 'ended'; io.to(room.code).emit('gameOver', { winner, message, players: room.players, log: room.log }); }
-function startTimer(room, sec, type){ clearInterval(room.timerInt); room.timeLeft = sec; io.to(room.code).emit('timer', { timeLeft: sec, type, total: sec }); room.timerInt = setInterval(() => { if(room.phase === 'ended') { clearInterval(room.timerInt); return; } room.timeLeft--; io.to(room.code).emit('timerTick', { timeLeft: room.timeLeft, type }); if (room.timeLeft <= 0){ clearInterval(room.timerInt); if (type === 'night') doDay(room); else if (type === 'day') doLynch(room); } }, 1000); }
-function doStartGame(room){ if (room.players.length < 3) return; let maxWolves = Math.max(1, Math.floor(room.players.length / 3)); if(room.config.wolfCount > maxWolves) room.config.wolfCount = maxWolves; let pool = []; for (let i = 0; i < room.config.wolfCount; i++) pool.push('werewolf'); ['seer', 'doctor', 'mayor', 'alpha', 'bodyguard', 'witch', 'cupid', 'jester'].forEach(r => { if (room.config.enabledRoles[r]) pool.push(r); }); while (pool.length < room.players.length) pool.push('villager'); if(pool.length > room.players.length){ let villagers = pool.filter(r => r === 'villager'); let specials = pool.filter(r => r !== 'villager'); while(specials.length + villagers.length > room.players.length && villagers.length > 0) villagers.pop(); pool = [...specials, ...villagers]; } pool = pool.sort(() => 0.5 - Math.random()).slice(0, room.players.length); room.players.forEach((p, i) => { p.role = pool[i] || 'villager'; p.alive = true; p.lover = null; p.witchHeal = true; p.witchPoison = true; p.bodyguardLastTarget = null; }); room.players.forEach(p => { let s = io.sockets.sockets.get(p.id); if (s) s.emit('roleAssigned', { role: p.role, roleData: ALL_ROLES[p.role], allPlayers: room.players, lovers: [] }); }); room.phase = 'night'; room.nightActions = {}; room.votes = {}; room.werewolfChat = []; room.lobbyChat = []; room.cupidDone = false; room.log = [`🌙 Game baru! Config: ${room.config.wolfCount} wolf`]; io.to(room.code).emit('gameStarted', { narration: pick(NARATOR.start), isAI: false }); let cupid = room.players.find(p => p.role === 'cupid'); if(cupid){ let s = io.sockets.sockets.get(cupid.id); if(s) s.emit('cupidPrompt', { players: room.players.filter(p => p.name !== cupid.name).map(p => p.name) }); } startTimer(room, room.config.nightTime, 'night'); }
-function doDay(room){ if (room.phase !== 'night') return; clearInterval(room.timerInt); let a = room.nightActions || {}; let wolfVotes = {}; Object.entries(a.wolfVotes || {}).forEach(([voter, target]) => { let voterP = room.players.find(p => p.name === voter); if(!voterP || !voterP.alive) return; let w = voterP?.role === 'alpha' ? 2 : 1; wolfVotes[target] = (wolfVotes[target] || 0) + w; }); let victimName = Object.entries(wolfVotes).sort((x, y) => y[1] - x[1])[0]?.[0] || null; let victim = room.players.find(p => p.name === victimName && p.alive); if(!victim) victimName = null; let savedByDoctor = victim && (a.doctorTarget === victimName); let savedByWitch = victim && (a.witchHealTarget === victimName); let savedByBodyguard = victim && (a.bodyguardTarget === victimName); let saved = savedByDoctor || savedByWitch || savedByBodyguard; let savedBy = null; if (savedByDoctor) savedBy = 'doctor'; else if (savedByWitch) savedBy = 'witch'; else if (savedByBodyguard) savedBy = 'bodyguard'; if (saved && victim){ if (savedBy === 'doctor') room.log.push(`💉 1 warga diselamatkan Doctor! Doctor tetap hidup. (nama dirahasiakan)`); else if (savedBy === 'witch') room.log.push(`🧙 1 warga diselamatkan Witch! (nama dirahasiakan)`); else if (savedBy === 'bodyguard') room.log.push(`🛡️ 1 warga diselamatkan Bodyguard! Bodyguard gugur! (nama dirahasiakan)`); } if (victim && !saved) killPlayer(room, victim, 'dimangsa Werewolf'); if (victim && savedBy === 'bodyguard'){ let bg = room.players.find(p => p.role === 'bodyguard' && p.alive && p.bodyguardLastTarget === victimName); if (!bg) bg = room.players.find(p => p.role === 'bodyguard' && p.alive); if (bg){ killPlayer(room, bg, 'melindungi 1 warga dari Werewolf - gugur sebagai tumbal'); room.log.push(`💀 Bodyguard gugur! Dia menukar nyawanya untuk 1 warga!`); } } if (a.witchPoisonTarget){ let p = room.players.find(x => x.name === a.witchPoisonTarget && x.alive); if (p){ killPlayer(room, p, 'diracun Witch'); room.log.push(`🧪 1 warga diracun Witch! (nama dirahasiakan)`); } } room.phase = 'day'; room.nightActions = {}; room.votes = {}; let win = checkWinner(room); if (win){ endGame(room, win, win === 'werewolves' ? pick(NARATOR.winWolf) : pick(NARATOR.winVillager)); return; } let announcement = null; if (victim && !saved){ announcement = { type: 'killed', title: `💀 ${victimName} DIBUNUH WEREWOLF!`, sub: `Role-nya adalah ${victim.role} • Warga berduka...` }; } else if (victimName && saved){ if (savedBy === 'bodyguard') announcement = { type: 'saved', title: `🛡️ 1 WARGA DISELAMATKAN BODYGUARD!`, sub: `Bodyguard GUGUR sebagai tumbal! Dia menukar nyawanya! Korban selamat!` }; else if (savedBy === 'witch') announcement = { type: 'saved', title: `🧙 1 WARGA DISELAMATKAN WITCH!`, sub: `Witch memakai ramuan Heal-nya! 1 warga selamat dari terkaman!` }; else if (savedBy === 'doctor') announcement = { type: 'saved', title: `💉 1 WARGA DISELAMATKAN DOCTOR!`, sub: `Doctor berhasil nge-heal 1 warga! Doctor TETAP HIDUP dan bisa nyelametin lagi besok!` }; } else if (a.witchPoisonTarget){ announcement = { type: 'poison', title: `🧪 1 WARGA DIRACUN WITCH!`, sub: `1 warga telah meninggal karena racun Witch malam ini...` }; } if (!announcement && !victimName){ announcement = { type: 'peace', title: `☀️ TIDAK ADA KORBAN MALAM INI!`, sub: `Semua warga selamat! Werewolf gagal berburu...` }; } io.to(room.code).emit('dayStarted', { narration: (victim && !saved) ? NARATOR.dayDeath(victimName, victim.role) : (victimName && saved) ? NARATOR.daySaved(victimName) : pick(NARATOR.dayPeace), players: room.players, log: room.log, killCam: (victim && !saved) ? { victim: victimName, role: victim.role } : null, announcement: announcement }); startTimer(room, room.config.dayTime, 'day'); }
-function doLynch(room){ if (room.phase !== 'day') return; clearInterval(room.timerInt); let count = {}; Object.values(room.votes || {}).forEach(v => { count[v.target] = (count[v.target] || 0) + v.weight; }); let sorted = Object.entries(count).sort((a,b) => b[1]-a[1]); let lynched = null; if(sorted.length > 0){ if(sorted.length === 1 || sorted[0][1] > sorted[1][1]) lynched = sorted[0][0]; else { room.log.push(`⚖️ Vote seri ${sorted[0][1]} vs ${sorted[1][1]} - Tidak ada yang digantung!`); lynched = null; } } room.votes = {}; if (lynched){ let p = room.players.find(x => x.name === lynched && x.alive); if (p && p.role === 'jester'){ p.alive = false; endGame(room, 'jester', `🤡 JESTER MENANG! ${lynched} berhasil bikin dirinya digantung! Mbah Kromo tepuk jidat, 'Kita kena prank badut, nak...'`); return; } if (p){ killPlayer(room, p, 'digantung warga'); room.log.push(`🪓 ${lynched} digantung - Role: ${p.role}`); } } let win = checkWinner(room); if (win){ endGame(room, win, win === 'werewolves' ? pick(NARATOR.winWolf) : pick(NARATOR.winVillager)); return; } room.phase = 'night'; room.nightActions = {}; let lynchedPlayer = room.players.find(x => x.name === lynched); io.to(room.code).emit('nightStarted', { narration: lynched ? NARATOR.lynch(lynched, lynchedPlayer?.role || 'Warga') + ' ' + pick(NARATOR.night) : pick(NARATOR.noLynch), players: room.players, log: room.log }); startTimer(room, room.config.nightTime, 'night'); }
+function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+function cleanName(n){ return String(n||'').trim().slice(0,16); }
+
+function checkWinner(room){
+  let alive = room.players.filter(p=>p.alive);
+  let wolves = alive.filter(p=>['werewolf','alpha','traitor'].includes(p.role));
+  let villagers = alive.filter(p=>!['werewolf','alpha','traitor','jester'].includes(p.role));
+  if(wolves.length===0) return 'villagers';
+  if(wolves.length >= villagers.length) return 'werewolves';
+  return null;
+}
+function endGame(room, win, msg){
+  room.phase='ended';
+  io.to(room.code).emit('gameOver', { winner: win, msg, players: room.players });
+  if(publicRooms[room.code]) delete publicRooms[room.code];
+}
+function doStartGame(room){
+  let players = room.players;
+  let roles = [];
+  let cfg = room.config;
+  for(let i=0;i<cfg.wolfCount;i++) roles.push('werewolf');
+  for(let r in cfg.enabledRoles){ if(cfg.enabledRoles[r] && r!=='villager' && r!=='werewolf' && roles.length < players.length) roles.push(r); }
+  while(roles.length < players.length) roles.push('villager');
+  roles = roles.sort(()=>Math.random()-0.5);
+  players.forEach((p,i)=>{ p.role=roles[i]; p.alive=true; p.voted=false; });
+  room.phase='night'; room.day=1; room.nightActions={}; room.votes={}; room.silenced={};
+  players.forEach(p=>{ let s=io.sockets.sockets.get(p.id); if(s) s.emit('roleAssigned', { role:p.role, roleData:ALL_ROLES[p.role], allPlayers:players }); });
+  io.to(room.code).emit('gameStarted', { players });
+  io.to(room.code).emit('nightStarted', { narration: pick(NARATOR.night), players, log: room.log });
+}
+function doDay(room){
+  room.phase='day'; room.votes={};
+  io.to(room.code).emit('dayStarted', { players: room.players, log: room.log });
+}
+function doLynch(room){
+  let counts={};
+  for(let v in room.votes){ let t=room.votes[v].target; counts[t]=(counts[t]||0)+room.votes[v].weight; }
+  let max=0, lynched=null;
+  for(let t in counts){ if(counts[t]>max){ max=counts[t]; lynched=t; } }
+  if(lynched){
+    let p=room.players.find(x=>x.name===lynched);
+    if(p){
+      // JESTER menang kalau digantung
+      if(p.role==='jester'){ p.alive=false; room.log.push(`🤡 ${p.name} digantung, Jester MENANG!`); io.to(room.code).emit('gameOver', { winner:'jester', msg:`🤡 ${p.name} adalah Jester! Dia MENANG karena digantung!`, players: room.players }); return; }
+      // HUNTER - kasih kesempatan nembak
+      if(p.role==='hunter'){ p.alive=false; io.to(room.code).emit('hunterTurn', { hunterName:p.name, msg:'🏹 Hunter mati! Pilih 1 orang untuk ditembak!' }); room.log.push(`🏹 ${p.name} (Hunter) digantung, dia menembak balik!`); }
+      else { p.alive=false; room.log.push(NARATOR.lynch(p.name, ALL_ROLES[p.role].name)); }
+    }
+  }
+  let win=checkWinner(room);
+  if(win){ endGame(room, win, win==='werewolves'?pick(NARATOR.winWolf):pick(NARATOR.winVillager)); return; }
+  room.phase='night'; room.day++;
+  io.to(room.code).emit('nightStarted', { narration: pick(NARATOR.night), players: room.players, log: room.log });
+}
+
 io.on('connection', socket => {
-  socket.on('createRoom', ({ name }) => { name = cleanName(name); if(!name) return socket.emit('errorMsg', 'Nama dulu!'); let code = Math.random().toString(36).substring(2, 6).toUpperCase(); ROOMS[code] = { code, hostId: socket.id, players: [], log: [], nightActions: {}, votes: {}, werewolfChat: [], lobbyChat: [], phase: 'lobby', timeLeft: 0, config: JSON.parse(JSON.stringify(DEFAULT_CONFIG)), cupidDone: false, voiceUsers: [] }; ROOMS[code].players.push({ id: socket.id, name, role: null, alive: true, lover: null, witchHeal: true, witchPoison: true, bodyguardLastTarget: null }); socket.join(code); socket.emit('roomCreated', { code, config: ROOMS[code].config }); io.to(code).emit('updateLobby', ROOMS[code]); io.to(code).emit('lobbyChatMsg', { chat: ROOMS[code].lobbyChat }); });
-  socket.on('joinRoom', ({ code, name }) => { code = (code || '').toUpperCase(); name = cleanName(name); let room = ROOMS[code]; if (!room) return socket.emit('errorMsg', 'Kode salah'); if (!name) return socket.emit('errorMsg', 'Nama dulu!'); if (room.phase !== 'lobby') return socket.emit('errorMsg', 'Game sudah mulai! Tunggu game berikutnya.'); if (room.players.some(p => p.name.toLowerCase() === name.toLowerCase())) return socket.emit('errorMsg', `Nama "${name}" sudah dipakai! Ganti nama lain.`); if (room.players.some(p => p.id === socket.id)) return socket.emit('errorMsg', 'Kamu sudah di room ini!'); room.players.push({ id: socket.id, name, role: null, alive: true, lover: null, witchHeal: true, witchPoison: true, bodyguardLastTarget: null }); socket.join(code); socket.emit('joinedRoom', { code, config: room.config }); io.to(code).emit('updateLobby', room); io.to(code).emit('lobbyChatMsg', { chat: room.lobbyChat || [] }); });
-
-  // ========== CHAT LOBBY - FIX: CUMA 1 HANDLER, JANGAN DOBEL ==========
-  socket.on('lobbyChat', ({ code, msg }) => {
-    let room = ROOMS[code]; if(!room) return;
-    if(room.phase !== 'lobby') return;
-    let p = room.players.find(x=>x.id===socket.id); if(!p) return;
-    if(!msg || !String(msg).trim()) return;
-    if(!room.lobbyChat) room.lobbyChat = [];
-    room.lobbyChat.push({ name: p.name, msg: String(msg).trim().slice(0,200), time: new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}) });
-    if(room.lobbyChat.length > 50) room.lobbyChat.shift();
-    io.to(code).emit('lobbyChatMsg', { chat: room.lobbyChat });
+  socket.on('createRoom', ({ name, isPrivate, maxPlayers, roomName }) => {
+    name = cleanName(name); if(!name) return socket.emit('errorMsg', 'Nama dulu!');
+    let code = Math.random().toString(36).substring(2, 6).toUpperCase();
+    ROOMS[code] = { code, hostId: socket.id, players: [], log: [], nightActions: {}, votes: {}, werewolfChat: [], lobbyChat: [], phase: 'lobby', timeLeft: 0, config: JSON.parse(JSON.stringify(DEFAULT_CONFIG)), cupidDone: false, voiceUsers: [], silenced: {} };
+    ROOMS[code].players.push({ id: socket.id, name, role: null, alive: true, lover: null, witchHeal: true, witchPoison: true, bodyguardLastTarget: null });
+    publicRooms[code] = { code, name: roomName || ('Desa '+code), host: name, players:[socket.id], maxPlayers: maxPlayers||8, isPrivate: !!isPrivate, createdAt: Date.now() };
+    socket.join(code);
+    socket.emit('roomCreated', { code, config: ROOMS[code].config });
+    io.to(code).emit('updateLobby', ROOMS[code]);
   });
 
-  socket.on('updateConfig', ({ code, config }) => { let room = ROOMS[code]; if (!room || room.hostId !== socket.id) return; if (room.phase !== 'lobby') return; room.config = sanitizeConfig(config); io.to(code).emit('configUpdated', room.config); io.to(code).emit('updateLobby', room); });
-  socket.on('kickPlayer', ({ code, targetId }) => { let room = ROOMS[code]; if (!room) return; if (room.hostId !== socket.id) return; if (targetId === socket.id) return socket.emit('errorMsg', 'Kamu gak bisa kick dirimu sendiri!'); let target = room.players.find(p => p.id === targetId); if (!target) return; room.log.push(`👢 ${target.name} di-kick oleh HOST!`); io.to(targetId).emit('kicked', { message: 'Kamu di-kick oleh HOST!' }); room.players = room.players.filter(p => p.id !== targetId); if(room.votes && room.votes[target.name]) delete room.votes[target.name]; if(room.nightActions && room.nightActions.wolfVotes) delete room.nightActions.wolfVotes[target.name]; let targetSocket = io.sockets.sockets.get(targetId); if (targetSocket) targetSocket.leave(code); io.to(code).emit('updateLobby', room); if (room.phase === 'night' || room.phase === 'day'){ io.to(code).emit('playerKicked', { kickedName: target.name, players: room.players, log: room.log }); let win = checkWinner(room); if (win){ endGame(room, win, win === 'werewolves' ? pick(NARATOR.winWolf) : pick(NARATOR.winVillager)); return; } if(room.phase === 'night'){ let aliveWolves = room.players.filter(p => p.alive && ['werewolf','alpha'].includes(p.role)).length; let voted = Object.keys(room.nightActions.wolfVotes || {}).length; if(aliveWolves > 0 && voted >= aliveWolves) doDay(room); } } });
-  socket.on('startGame', ({ code }) => { let room = ROOMS[code]; if (!room || room.hostId !== socket.id) return; if (room.phase !== 'lobby') return socket.emit('errorMsg', 'Game sudah jalan!'); if (room.players.length < 3) return socket.emit('errorMsg', 'Minimal 3 pemain buat mulai!'); if (room.players.length > 15) return socket.emit('errorMsg', 'Maksimal 15 pemain!'); doStartGame(room); });
-  socket.on('nightAction', ({ code, targetName }) => { let room = ROOMS[code]; if (!room || room.phase !== 'night') return; let pl = room.players.find(p => p.id === socket.id); if (!pl || !pl.alive) return; let target = room.players.find(p => p.name === targetName && p.alive); if(!target) return socket.emit('errorMsg', 'Target sudah mati / tidak ada!'); room.nightActions = room.nightActions || {}; if (['werewolf', 'alpha'].includes(pl.role)){ room.nightActions.wolfVotes = room.nightActions.wolfVotes || {}; room.nightActions.wolfVotes[pl.name] = targetName; let totalWolves = room.players.filter(p => p.alive && ['werewolf', 'alpha'].includes(p.role)).length; if (Object.keys(room.nightActions.wolfVotes).length >= totalWolves) doDay(room); } if (pl.role === 'seer') socket.emit('seerResult', { target: targetName, isWerewolf: ['werewolf', 'alpha'].includes(target?.role), role: target?.role }); if (pl.role === 'doctor') room.nightActions.doctorTarget = targetName; if (pl.role === 'bodyguard'){ if (targetName === pl.name) return socket.emit('errorMsg', '🛡️ Bodyguard GAK bisa jaga diri sendiri! Pilih orang lain!'); if (pl.bodyguardLastTarget === targetName) return socket.emit('errorMsg', `🛡️ Bodyguard GAK boleh jaga ${targetName} 2 malam berturut-turut! Ganti orang lain!`); room.nightActions.bodyguardTarget = targetName; pl.bodyguardLastTarget = targetName; } });
-  socket.on('witchAction', ({ code, action, targetName }) => { let room = ROOMS[code]; if (!room || room.phase !== 'night') return; let me = room.players.find(p => p.id === socket.id); if (!me || me.role !== 'witch' || !me.alive) return; let target = room.players.find(p => p.name === targetName && p.alive); if(!target) return socket.emit('errorMsg', 'Target sudah mati!'); room.nightActions = room.nightActions || {}; if (action === 'heal' && me.witchHeal){ room.nightActions.witchHealTarget = targetName; me.witchHeal = false; socket.emit('witchDone', { action: 'heal' }); } if (action === 'poison' && me.witchPoison){ room.nightActions.witchPoisonTarget = targetName; me.witchPoison = false; socket.emit('witchDone', { action: 'poison' }); } });
-  socket.on('cupidChoice', ({ code, lover1, lover2 }) => { let room = ROOMS[code]; if (!room || room.phase !== 'night') return; let me = room.players.find(p => p.id === socket.id); if(!me || me.role !== 'cupid' || !me.alive) return socket.emit('errorMsg', 'Kamu bukan Cupid!'); if(room.cupidDone) return socket.emit('errorMsg', 'Cupid sudah pilih!'); if(!lover1 || !lover2 || lover1 === lover2) return socket.emit('errorMsg', 'Pilih 2 orang yang beda!'); let p1 = room.players.find(p => p.name === lover1 && p.alive); let p2 = room.players.find(p => p.name === lover2 && p.alive); if(!p1 || !p2) return socket.emit('errorMsg', 'Lovers harus masih hidup!'); room.cupidDone = true; p1.lover = p2.name; p2.lover = p1.name; room.log.push(`💘 ${p1.name} & ${p2.name} jadi LOVERS!`); let s1 = io.sockets.sockets.get(p1.id); if (s1) s1.emit('roleAssigned', { role: p1.role, roleData: ALL_ROLES[p1.role], allPlayers: room.players, lovers: [p1.name, p2.name] }); let s2 = io.sockets.sockets.get(p2.id); if (s2) s2.emit('roleAssigned', { role: p2.role, roleData: ALL_ROLES[p2.role], allPlayers: room.players, lovers: [p1.name, p2.name] }); socket.emit('cupidDone', { lover1, lover2 }); });
-  socket.on('vote', ({ code, targetName }) => { let room = ROOMS[code]; if (!room || room.phase !== 'day') return; let voter = room.players.find(p => p.id === socket.id); if (!voter || !voter.alive) return; let target = room.players.find(p => p.name === targetName && p.alive); if(!target) return socket.emit('errorMsg', 'Target sudah mati!');
-  // 🔒 KUNCI VOTE 1x - KALAU UDAH VOTE, TOLAK!
-  if(room.votes[voter.name]) return socket.emit('errorMsg', '🔒 Vote kamu udah terkunci! Gak bisa ganti!');
-  room.votes[voter.name] = { target: targetName, weight: voter.role === 'mayor' ? 2 : 1 }; io.to(code).emit('voteUpdate', room.votes); let aliveCount = room.players.filter(p => p.alive).length; if (Object.keys(room.votes).length >= aliveCount) doLynch(room); });
-
-  // ========== GUA WEREWOLF - FIX: BOLEH CHAT PAS NIGHT & DAY ==========
-  socket.on('werewolfChat', ({ code, msg }) => { let room = ROOMS[code]; if (!room) return; if(room.phase==='lobby' || room.phase==='ended') return; let p = room.players.find(x => x.id === socket.id); if (!p || !p.alive || !['werewolf','alpha'].includes(p.role)) return; msg = String(msg || '').trim().slice(0, 200); if(!msg) return; if(!room.werewolfChat) room.werewolfChat = []; room.werewolfChat.push({ name: p.name, msg }); if(room.werewolfChat.length > 50) room.werewolfChat.shift(); room.players.filter(x => ['werewolf', 'alpha'].includes(x.role) && x.alive).forEach(w => { io.to(w.id).emit('werewolfChatMsg', { chat: room.werewolfChat }); }); });
-
-  socket.on('chatAll', ({ code, msg }) => { let room = ROOMS[code]; if (!room) return; if (room.phase !== 'day') return socket.emit('errorMsg', 'Chat tuduhan cuma bisa siang hari!'); let p = room.players.find(x => x.id === socket.id); if (!p || !p.alive) return socket.emit('errorMsg', 'Yang sudah mati gak bisa chat!'); msg = String(msg || '').trim().slice(0, 200); if (!msg) return; io.to(code).emit('chatAllMsg', { name: p.name, msg, time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }); });
-  socket.on('sendAd', ({ code, image, duration, caption }) => { let room = ROOMS[code]; if (!room) return; if (room.hostId !== socket.id) return socket.emit('errorMsg', '⛔ Cuma HOST yang bisa kirim iklan!'); if (!image || typeof image !== 'string' || !image.startsWith('data:image/')) return socket.emit('errorMsg', 'Gambar iklan tidak valid! Pilih gambar lagi.'); if (image.length > 8000000) return socket.emit('errorMsg', 'Gambar masih terlalu besar! Coba gambar lain.'); let dur = parseInt(duration); if (isNaN(dur)) dur = 5; dur = Math.max(2, Math.min(30, dur)); let cap = String(caption || '').trim().slice(0, 80); room.log.push(`📢 HOST kirim iklan (${dur} detik)`); io.to(code).emit('showAd', { image, duration: dur, caption: cap, from: room.players.find(p=>p.id===socket.id)?.name || 'HOST' }); socket.emit('adSent', { duration: dur }); });
-  socket.on('voice-join', ({ code }) => {
-    let room = ROOMS[code]; if (!room) return;
-    if (!room.voiceUsers) room.voiceUsers = [];
-    if (!room.voiceUsers.includes(socket.id)) room.voiceUsers.push(socket.id);
-    let others = room.voiceUsers.filter(id => id !== socket.id);
-    socket.emit('voice-users', { users: others });
-    others.forEach(id => { io.to(id).emit('voice-user-joined', { id: socket.id, name: room.players.find(p=>p.id===socket.id)?.name || 'Pemain' }); });
-    io.to(code).emit('voice-count', { count: room.voiceUsers.length });
-  });
-  socket.on('voice-leave', ({ code }) => {
-    let room = ROOMS[code]; if (!room || !room.voiceUsers) return;
-    room.voiceUsers = room.voiceUsers.filter(id => id !== socket.id);
-    io.to(code).emit('voice-user-left', { id: socket.id });
-    io.to(code).emit('voice-count', { count: room.voiceUsers.length });
-  });
-  socket.on('voice-offer', ({ to, offer }) => { io.to(to).emit('voice-offer', { from: socket.id, offer }); });
-  socket.on('voice-answer', ({ to, answer }) => { io.to(to).emit('voice-answer', { from: socket.id, answer }); });
-  socket.on('voice-ice', ({ to, candidate }) => { io.to(to).emit('voice-ice', { from: socket.id, candidate }); });
-  socket.on('voice-speaking', ({ code, speaking }) => {
-    let room = ROOMS[code]; if (!room) return;
-    socket.to(code).emit('voice-speaking', { id: socket.id, name: room.players.find(p=>p.id===socket.id)?.name || '', speaking: !!speaking });
-  });
-
-  // ========== PLAY AGAIN - FIX UTAMA: GAK NYANGKUT DI HOST ==========
-  socket.on('playAgain', (data) => {
-  let code = data.code;
-    let room = ROOMS[code];
-    if (!room) return;
-    // FIX: Jangan cek phase !== 'ended' - biar Host bisa balik kapan aja
-    clearInterval(room.timerInt);
-    room.players.forEach(p => { p.role = null; p.alive = true; p.lover = null; p.witchHeal = true; p.witchPoison = true; p.bodyguardLastTarget = null; });
-    room.phase = 'lobby';
-    room.nightActions = {};
-    room.votes = {};
-    room.werewolfChat = [];
-    room.lobbyChat = [];
-    room.cupidDone = false;
-    room.timeLeft = 0;
-    room.log = ['🔄 Game baru! Host bisa setting ulang dulu...'];
-    io.to(code).emit('playAgainReady', { code, config: room.config });
+  socket.on('joinRoom', ({ code, name }) => {
+    code = (code || '').toUpperCase(); name = cleanName(name);
+    let room = ROOMS[code]; if (!room) return socket.emit('errorMsg', 'Kode salah');
+    if (!name) return socket.emit('errorMsg', 'Nama dulu!');
+    if (room.phase !== 'lobby') return socket.emit('errorMsg', 'Game sudah mulai!');
+    if (room.players.some(p => p.name.toLowerCase() === name.toLowerCase())) return socket.emit('errorMsg', `Nama "${name}" sudah dipakai!`);
+    if (room.players.some(p => p.id === socket.id)) return socket.emit('errorMsg', 'Kamu sudah di room ini!');
+    room.players.push({ id: socket.id, name, role: null, alive: true, lover: null, witchHeal: true, witchPoison: true, bodyguardLastTarget: null });
+    if(publicRooms[code] && !publicRooms[code].players.includes(socket.id)) publicRooms[code].players.push(socket.id);
+    socket.join(code);
+    socket.emit('joinedRoom', { code, config: room.config });
     io.to(code).emit('updateLobby', room);
-    io.to(code).emit('lobbyChatMsg', { chat: [] });
-    io.to(code).emit('configUpdated', room.config);
   });
 
-  socket.on('disconnect', () => { for (let code in ROOMS){ let room = ROOMS[code]; let wasIn = room.players.some(p => p.id === socket.id); if(!wasIn && !(room.voiceUsers||[]).includes(socket.id)) continue; let wasHost = room.hostId === socket.id; room.players = room.players.filter(p => p.id !== socket.id); if (room.voiceUsers) { room.voiceUsers = room.voiceUsers.filter(id => id !== socket.id); io.to(code).emit('voice-user-left', { id: socket.id }); io.to(code).emit('voice-count', { count: room.voiceUsers.length }); } if (room.players.length === 0){ clearInterval(room.timerInt); delete ROOMS[code]; continue; } if (wasHost){ room.hostId = room.players[0].id; room.log.push(`👑 Host cabut! Host baru: ${room.players[0].name}`); io.to(code).emit('hostChanged', { newHost: room.players[0].name, newHostId: room.hostId }); } io.to(code).emit('updateLobby', room); if(room.phase === 'night' || room.phase === 'day'){ let win = checkWinner(room); if(win){ endGame(room, win, win === 'werewolves' ? pick(NARATOR.winWolf) : pick(NARATOR.winVillager)); } } } });
+  socket.on('startGame', ({ code }) => {
+    let room = ROOMS[code]; if (!room || room.hostId !== socket.id) return;
+    if (room.phase !== 'lobby') return socket.emit('errorMsg', 'Game sudah jalan!');
+    if (room.players.length < 3) return socket.emit('errorMsg', 'Minimal 3 pemain!');
+    if (room.players.length > 15) return socket.emit('errorMsg', 'Maksimal 15 pemain!');
+    if(publicRooms[code]) delete publicRooms[code];
+    doStartGame(room);
+  });
+
+  socket.on('nightAction', ({ code, targetName }) => {
+    let room = ROOMS[code]; if (!room || room.phase !== 'night') return;
+    let pl = room.players.find(p => p.id === socket.id); if (!pl || !pl.alive) return;
+    let target = room.players.find(p => p.name === targetName && p.alive); if(!target) return socket.emit('errorMsg', 'Target sudah mati / tidak ada!');
+    room.nightActions = room.nightActions || {};
+    if (['werewolf', 'alpha'].includes(pl.role)){
+      room.nightActions.wolfVotes = room.nightActions.wolfVotes || {};
+      room.nightActions.wolfVotes[pl.name] = targetName;
+      let totalWolves = room.players.filter(p => p.alive && ['werewolf', 'alpha'].includes(p.role)).length;
+      if (Object.keys(room.nightActions.wolfVotes).length >= totalWolves) doDay(room);
+    }
+    if (pl.role === 'seer') socket.emit('seerResult', { target: targetName, isWerewolf: ['werewolf','alpha'].includes(target?.role), role: target?.role==='traitor' ? 'villager' : target?.role });
+    if (pl.role === 'doctor') room.nightActions.doctorTarget = targetName;
+    if (pl.role === 'silencer'){ room.silenced = {}; let t2 = room.players.find(p=>p.name===targetName); if(t2) room.silenced[t2.id]=true; socket.emit('actionDone', { msg:'🤫 '+targetName+' akan di-silence besok siang!' }); }
+    if (pl.role === 'bodyguard'){
+      if (targetName === pl.name) return socket.emit('errorMsg', '🛡️ Bodyguard GAK bisa jaga diri sendiri!');
+      if (pl.bodyguardLastTarget === targetName) return socket.emit('errorMsg', `🛡️ GAK boleh jaga ${targetName} 2 malam berturut-turut!`);
+      room.nightActions.bodyguardTarget = targetName; pl.bodyguardLastTarget = targetName;
+    }
+  });
+
+  socket.on('hunterShot', ({ code, targetName }) => {
+    let room = ROOMS[code]; if(!room) return;
+    let t = room.players.find(p=>p.name===targetName); if(t){ t.alive=false; room.log.push(`🏹 Hunter menembak ${t.name}!`); }
+    io.to(code).emit('updateLobby', room);
+    io.to(code).emit('playerList', room.players);
+    let win = checkWinner(room); if(win) endGame(room, win, win==='werewolves'?pick(NARATOR.winWolf):pick(NARATOR.winVillager));
+    else { room.phase='night'; io.to(code).emit('nightStarted', { narration: pick(NARATOR.night), players: room.players, log: room.log }); }
+  });
+
+  socket.on('witchAction', ({ code, action, targetName }) => {
+    let room = ROOMS[code]; if (!room || room.phase !== 'night') return;
+    let me = room.players.find(p => p.id === socket.id); if (!me || me.role !== 'witch' || !me.alive) return;
+    room.nightActions = room.nightActions || {};
+    if (action === 'heal' && me.witchHeal){ room.nightActions.witchHealTarget = targetName; me.witchHeal = false; socket.emit('witchDone', { action: 'heal' }); }
+    if (action === 'poison' && me.witchPoison){ room.nightActions.witchPoisonTarget = targetName; me.witchPoison = false; socket.emit('witchDone', { action: 'poison' }); }
+  });
+
+  socket.on('cupidChoice', ({ code, lover1, lover2 }) => {
+    let room = ROOMS[code]; if (!room || room.phase !== 'night') return;
+    let me = room.players.find(p => p.id === socket.id); if(!me || me.role !== 'cupid' || !me.alive) return;
+    if(room.cupidDone) return;
+    let p1 = room.players.find(p => p.name === lover1 && p.alive); let p2 = room.players.find(p => p.name === lover2 && p.alive);
+    if(!p1 || !p2) return;
+    room.cupidDone = true; p1.lover = p2.name; p2.lover = p1.name; room.log.push(`💘 ${p1.name} & ${p2.name} jadi LOVERS!`);
+    socket.emit('cupidDone', { lover1, lover2 });
+  });
+
+  socket.on('vote', ({ code, targetName }) => {
+    let room = ROOMS[code]; if (!room || room.phase !== 'day') return;
+    let voter = room.players.find(p => p.id === socket.id); if (!voter || !voter.alive) return;
+    let target = room.players.find(p => p.name === targetName && p.alive); if(!target) return;
+    if(room.votes[voter.name]) return socket.emit('errorMsg', '🔒 Vote kamu udah terkunci!');
+    room.votes[voter.name] = { target: targetName, weight: voter.role === 'mayor' ? 2 : 1 };
+    io.to(code).emit('voteUpdate', room.votes);
+    let aliveCount = room.players.filter(p => p.alive).length;
+    if (Object.keys(room.votes).length >= aliveCount) doLynch(room);
+  });
+
+  socket.on('chatAll', ({ code, msg }) => {
+    let room = ROOMS[code]; if (!room) return;
+    if (room.phase !== 'day') return socket.emit('errorMsg', 'Chat cuma bisa siang hari!');
+    let p = room.players.find(x => x.id === socket.id); if (!p || !p.alive) return;
+    if(room.silenced && room.silenced[p.id]) return socket.emit('errorMsg', '🤫 Kamu di-silence! Gak bisa chat siang ini.');
+    msg = String(msg || '').trim().slice(0, 200); if (!msg) return;
+    io.to(code).emit('chatAllMsg', { name: p.name, msg, time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) });
+  });
+
+  socket.on('werewolfChat', ({ code, msg }) => {
+    let room = ROOMS[code]; if (!room) return;
+    if(room.phase==='lobby' || room.phase==='ended') return;
+    let p = room.players.find(x => x.id === socket.id); if (!p || !p.alive || !['werewolf','alpha'].includes(p.role)) return;
+    msg = String(msg || '').trim().slice(0, 200); if(!msg) return;
+    if(!room.werewolfChat) room.werewolfChat = [];
+    room.werewolfChat.push({ name: p.name, msg });
+    room.players.filter(x => ['werewolf', 'alpha'].includes(x.role) && x.alive).forEach(w => { io.to(w.id).emit('werewolfChatMsg', { chat: room.werewolfChat }); });
+  });
+
+  socket.on('sendAd', ({ code, image, duration, caption }) => {
+    let room = ROOMS[code]; if (!room) return;
+    if (room.hostId !== socket.id) return socket.emit('errorMsg', '⛔ Cuma HOST yang bisa kirim iklan!');
+    if (!image || !image.startsWith('data:image/')) return socket.emit('errorMsg', 'Gambar iklan tidak valid!');
+    let dur = Math.max(2, Math.min(30, parseInt(duration)||5));
+    let cap = String(caption || '').trim().slice(0, 80);
+    io.to(code).emit('showAd', { image, duration: dur, caption: cap, from: room.players.find(p=>p.id===socket.id)?.name || 'HOST' });
+  });
+
+  socket.on('disconnect', ()=>{
+    for(let code in ROOMS){
+      let room = ROOMS[code];
+      room.players = room.players.filter(p=>p.id!==socket.id);
+      if(publicRooms[code]) publicRooms[code].players = publicRooms[code].players.filter(id=>id!==socket.id);
+      io.to(code).emit('updateLobby', room);
+    }
+  });
 });
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => console.log('🐺 ONLINE di port ' + PORT));

@@ -276,6 +276,9 @@ input[type=password]{width:100%;padding:14px;border-radius:14px;border:1px solid
 .authTabs button.on{background:linear-gradient(90deg,#7c3aed,#ec4899);border-color:transparent}
 #authMsg{font-size:12px;text-align:center;margin-top:8px;min-height:16px}
 #userBar{display:none;align-items:center;justify-content:space-between;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);padding:10px 12px;border-radius:14px;margin-bottom:12px;font-size:13px}
+.avPick{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);font-size:20px;cursor:pointer}
+.avPick.on{border-color:#facc15;background:rgba(250,204,21,.25)}
+#userBarAvatar{width:38px;height:38px;min-width:38px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#ec4899);display:flex;align-items:center;justify-content:center;font-size:18px}
 </style>
 </head>
 <body>
@@ -291,12 +294,27 @@ input[type=password]{width:100%;padding:14px;border-radius:14px;border:1px solid
 
 <div id="homeScreen"><div class="homeWrap"><div class="card" id="authCard">
 <div style="text-align:center;font-size:12px;color:#d8c8f0;margin-bottom:12px">Login dulu biar ID kamu ke-save kayak Mahjong...</div>
-<div class="authTabs"><button id="tabLogin" class="on" onclick="switchAuth('login')">🔑 LOGIN</button><button id="tabReg" onclick="switchAuth('reg')">📝 DAFTAR</button></div>
 <input type="text" id="authId" placeholder="ID Kamu (3-20 huruf, tanpa spasi)" maxlength="20" autocomplete="off">
 <input type="password" id="authPass" placeholder="Password (minimal 4)" autocomplete="off">
-<input type="text" id="authName" placeholder="Nama di game (buat Daftar aja)" maxlength="15" autocomplete="off" style="display:none">
+<input type="text" id="authName" placeholder="Nama di game (buat Daftar aja)" maxlength="15" autocomplete="off">
+<div style="margin:8px 0 4px;font-size:12px;color:#d8c8f0">🖼️ Pilih Avatar pas Daftar:</div>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+  <div id="avatarPreview" style="width:56px;height:56px;min-width:56px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#ec4899);display:flex;align-items:center;justify-content:center;font-size:28px;border:2px solid #a855f7">🧑</div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap">
+    <button type="button" class="avPick on" onclick="pickAvatar('🧑',this)">🧑</button>
+    <button type="button" class="avPick" onclick="pickAvatar('🐺',this)">🐺</button>
+    <button type="button" class="avPick" onclick="pickAvatar('🧙',this)">🧙</button>
+    <button type="button" class="avPick" onclick="pickAvatar('👑',this)">👑</button>
+    <button type="button" class="avPick" onclick="pickAvatar('😎',this)">😎</button>
+    <button type="button" class="avPick" onclick="pickAvatar('🦊',this)">🦊</button>
+    <label style="background:#facc15;color:#000;font-size:11px;font-weight:800;padding:8px 10px;border-radius:99px;cursor:pointer">📸 PAKAI FOTO<input type="file" accept="image/*" style="display:none" onchange="onAvatarFile(this)"></label>
+  </div>
+</div>
 <label class="rememberRow"><input type="checkbox" id="rememberMe" checked> ✅ Ingat ID & Password saya (kayak Mahjong)</label>
-<button class="btn btn-primary" id="authBtn" onclick="doAuth()">🔑 LOGIN</button>
+<div class="row2">
+  <button class="btn btn-primary" onclick="doLogin()">🔑 LOGIN</button>
+  <button class="btn btn-dark" onclick="doRegister()">📝 DAFTAR</button>
+</div>
 <div id="authMsg"></div>
 </div>
 
@@ -308,7 +326,10 @@ input[type=password]{width:100%;padding:14px;border-radius:14px;border:1px solid
 <div id="homeError" style="display:none;color:#ff6a6a;font-size:12px;text-align:center;margin-top:10px"></div>
 <button class="btn btn-dark" style="margin-top:10px" onclick="openRules()">📜 LIHAT RULES DULU</button>
 </div></div></div>
-<div id="lobbyScreen" style="display:none"><div class="lobbyWrap"><div class="card" style="text-align:center"><div style="font-size:11px;letter-spacing:2px;color:#b9a5d6">KODE DESA KAMU</div><div class="codeBig" id="roomCodeBig">----</div><button class="btn btn-dark btn-small" style="margin-top:8px" onclick="copyCode()">📋 Salin Kode</button></div><div class="card"><div class="cardTitle">👥 WARGA DESA <span id="lobbyCount"></span></div><div id="playerList"></div></div>
+<div class="codeBig" id="roomCodeBig">----</div>
+<button class="btn btn-dark btn-small" style="margin-top:8px" onclick="copyCode()">📋 Salin Kode</button>
+<button class="btn btn-dark btn-small" style="margin-top:8px;background:rgba(255,0,0,.15);border-color:#ff4a4a" onclick="doLogout()">🚪 Logout Akun</button>
+</div>
 <div class="lobbyChatCard">
   <div class="lobbyChatHead">💬 <b>Chat Lobby</b> <span id="lobbyChatCount">0 orang di sini</span></div>
   <div id="lobbyChatList" class="lobbyChatList">
@@ -690,47 +711,65 @@ function closeScene(){
 function drawAnalogClock(s,total){ const c=el('analogClock'); if(!c) return; const ctx=c.getContext('2d'); ctx.clearRect(0,0,110,110); ctx.save(); ctx.translate(55,55); ctx.beginPath(); ctx.arc(0,0,50,0,2*Math.PI); ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=2; ctx.stroke(); for(let i=0;i<12;i++){ ctx.rotate(Math.PI/6); ctx.beginPath(); ctx.moveTo(0,-46); ctx.lineTo(0,-50); ctx.strokeStyle='#a855f7'; ctx.lineWidth=i%3===0?2:1; ctx.stroke(); } ctx.rotate(-(12*Math.PI/6)); let ang=((total-s)/total)*2*Math.PI-Math.PI/2; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(48*Math.cos(ang),48*Math.sin(ang)); ctx.strokeStyle=s<10?'#ff2a2a':'#ec4899'; ctx.lineWidth=3; ctx.stroke(); ctx.beginPath(); ctx.arc(0,0,4,0,2*Math.PI); ctx.fillStyle='#fff'; ctx.fill(); ctx.restore(); }
 socket.on('timer', d=>{ el('timerPhase').innerText=d.type==='night'?'🌙 MALAM - WEREWOLF BERBURU':'☀️ SIANG - VOTE GANTUNG'; el('timerDigital').innerText=d.timeLeft; el('timerFill').style.width='100%'; drawAnalogClock(d.timeLeft,d.total); });
 socket.on('timerTick', d=>{ el('timerDigital').innerText=d.timeLeft; let total=d.type==='night'?hostConfig.nightTime:hostConfig.dayTime; el('timerFill').style.width=(d.timeLeft/total*100)+'%'; drawAnalogClock(d.timeLeft,total); });
-// ===== AUTH ALA MAHJONG - INGAT ID & PASS =====
-let AUTH_MODE = 'login';
+// ===== AUTH ALA MAHJONG - LOGIN / DAFTAR + AVATAR =====
 let MY_ACCOUNT = null;
-function switchAuth(mode){
-  AUTH_MODE = mode;
-  document.getElementById('tabLogin').classList.toggle('on', mode==='login');
-  document.getElementById('tabReg').classList.toggle('on', mode==='reg');
-  document.getElementById('authName').style.display = mode==='reg' ? 'block' : 'none';
-  document.getElementById('authBtn').innerText = mode==='reg' ? '📝 DAFTAR SEKARANG' : '🔑 LOGIN';
-  document.getElementById('authMsg').innerText = '';
+let SELECTED_AVATAR = '🧑';
+let SELECTED_AVATAR_IMG = '';
+
+function pickAvatar(emoji, el){
+  SELECTED_AVATAR = emoji; SELECTED_AVATAR_IMG = '';
+  document.querySelectorAll('.avPick').forEach(x=>x.classList.remove('on'));
+  if(el) el.classList.add('on');
+  document.getElementById('avatarPreview').innerText = emoji;
+  document.getElementById('avatarPreview').style.backgroundImage = 'none';
 }
-async function doAuth(){
+function onAvatarFile(input){
+  let f = input.files[0]; if(!f) return;
+  let rd = new FileReader();
+  rd.onload = e=>{
+    SELECTED_AVATAR_IMG = e.target.result;
+    SELECTED_AVATAR = SELECTED_AVATAR_IMG;
+    let p = document.getElementById('avatarPreview');
+    p.innerText = ''; p.style.backgroundImage = 'url('+SELECTED_AVATAR_IMG+')'; p.style.backgroundSize='cover'; p.style.backgroundPosition='center';
+    document.querySelectorAll('.avPick').forEach(x=>x.classList.remove('on'));
+  };
+  rd.readAsDataURL(f);
+}
+function getAvatar(){ return SELECTED_AVATAR_IMG || SELECTED_AVATAR; }
+
+async function doRegister(){
   let id = document.getElementById('authId').value.trim();
   let pass = document.getElementById('authPass').value;
   let name = document.getElementById('authName').value.trim() || id;
   let msg = document.getElementById('authMsg');
   if(!id || id.length < 3) return msg.innerText = '❌ ID minimal 3 karakter!';
   if(!pass || pass.length < 4) return msg.innerText = '❌ Password minimal 4 karakter!';
-  msg.innerText = '⏳ Tunggu...';
-  let url = AUTH_MODE==='reg' ? '/api/register' : '/api/login';
-  let body = AUTH_MODE==='reg' ? {id, password:pass, display_name:name} : {id, password:pass};
-  try{
-    let r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    let d = await r.json();
-    if(!d.ok) return msg.innerText = '❌ ' + d.msg;
-    if(AUTH_MODE==='reg'){ msg.innerText = '✅ ' + d.msg + ' - Sekarang LOGIN!'; switchAuth('login'); return; }
-    // LOGIN BERHASIL
-    MY_ACCOUNT = d.user;
-    // INGAT ID & PASS - kayak Mahjong
-    if(document.getElementById('rememberMe').checked){
-      localStorage.setItem('werewolf_saved_id', id);
-      localStorage.setItem('werewolf_saved_pass', pass);
-      localStorage.setItem('werewolf_remember', '1');
-    } else {
-      localStorage.removeItem('werewolf_saved_id');
-      localStorage.removeItem('werewolf_saved_pass');
-      localStorage.removeItem('werewolf_remember');
-    }
-    localStorage.setItem('werewolf_last_id', id);
-    afterLogin();
-  }catch(e){ msg.innerText = '❌ Gagal nyambung ke server!'; }
+  msg.innerText = '⏳ Daftar...';
+  let r = await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id, password:pass, display_name:name, avatar:getAvatar()})});
+  let d = await r.json();
+  msg.innerText = d.ok ? '✅ ' + d.msg + ' - Sekarang klik LOGIN!' : '❌ ' + d.msg;
+}
+async function doLogin(){
+  let id = document.getElementById('authId').value.trim();
+  let pass = document.getElementById('authPass').value;
+  let msg = document.getElementById('authMsg');
+  if(!id || !pass) return msg.innerText = '❌ Isi ID & Password dulu!';
+  msg.innerText = '⏳ Login...';
+  let r = await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id, password:pass})});
+  let d = await r.json();
+  if(!d.ok) return msg.innerText = '❌ ' + d.msg;
+  MY_ACCOUNT = d.user;
+  if(document.getElementById('rememberMe').checked){
+    localStorage.setItem('werewolf_saved_id', id);
+    localStorage.setItem('werewolf_saved_pass', pass);
+    localStorage.setItem('werewolf_remember', '1');
+  } else {
+    localStorage.removeItem('werewolf_saved_id');
+    localStorage.removeItem('werewolf_saved_pass');
+    localStorage.removeItem('werewolf_remember');
+  }
+  if(MY_ACCOUNT.avatar) localStorage.setItem('werewolf_avatar', MY_ACCOUNT.avatar);
+  afterLogin();
 }
 function afterLogin(){
   document.getElementById('authCard').style.display = 'none';
@@ -738,7 +777,12 @@ function afterLogin(){
   document.getElementById('userBar').style.display = 'flex';
   document.getElementById('userBarName').innerText = MY_ACCOUNT.display_name || MY_ACCOUNT.id;
   document.getElementById('userBarId').innerText = '(@' + MY_ACCOUNT.id + ')';
-  // Nama di game otomatis pake akun login, biar gak bisa nyamar
+  let av = MY_ACCOUNT.avatar || localStorage.getItem('werewolf_avatar') || '🧑';
+  let avEl = document.getElementById('userBarAvatar');
+  if(avEl){
+    if(av.startsWith('data:image')){ avEl.innerText=''; avEl.style.backgroundImage='url('+av+')'; avEl.style.backgroundSize='cover'; }
+    else { avEl.innerText = av; avEl.style.backgroundImage='none'; }
+  }
   let ni = document.getElementById('nameInput'); if(ni) ni.value = MY_ACCOUNT.display_name || MY_ACCOUNT.id;
 }
 function doLogout(){
@@ -750,9 +794,9 @@ function doLogout(){
   document.getElementById('playCard').style.display = 'none';
   document.getElementById('userBar').style.display = 'none';
   document.getElementById('authPass').value = '';
-  document.getElementById('authMsg').innerText = '👋 Udah logout, data ingatan dihapus.';
+  document.getElementById('authMsg').innerText = '👋 Udah logout.';
 }
-// AUTO-ISI PAS BUKA WEB - kayak Mahjong
+// AUTO-ISI PAS BUKA WEB
 (function autoFill(){
   let savedId = localStorage.getItem('werewolf_saved_id');
   let savedPass = localStorage.getItem('werewolf_saved_pass');
@@ -760,6 +804,9 @@ function doLogout(){
   if(savedId) document.getElementById('authId').value = savedId;
   if(remember==='1' && savedPass) document.getElementById('authPass').value = savedPass;
   if(remember==='1') document.getElementById('rememberMe').checked = true;
+  let av = localStorage.getItem('werewolf_avatar');
+  if(av && av.startsWith('data:image')) SELECTED_AVATAR_IMG = av;
+  else if(av) SELECTED_AVATAR = av;
 })();
 window.onload=()=>{ let bgm=el('bgm'); if(!bgm){ musicOn=false; return; } bgm.volume=0.12; bgm.play().catch(()=>{ musicOn=false; el('musicCtrl').innerText='🔇 MUSIK OFF'; }); };
 </script>

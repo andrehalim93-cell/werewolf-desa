@@ -317,11 +317,9 @@ input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;b
 <div id="sceneModal"><div class="sceneBox" id="sceneBox"><img id="sceneImg" src="" alt="Scene"><div class="sceneOverlay"><div id="sceneEmoji" style="font-size:64px">🐺</div><div id="sceneTitle" class="sceneTitle">...</div><div id="sceneSub" class="sceneSub">...</div><button class="btn btn-dark" style="margin-top:14px;width:auto;padding:11px 22px" onclick="closeScene()">Lanjut ➡️</button><div id="sceneAutoText" style="font-size:11px;color:#facc15;margin-top:6px;font-weight:700">Otomatis nutup 3 detik...</div></div></div></div>
 <div id="killCam"><div style="font-size:60px">🐺</div><div id="killCamText"></div><div id="killCamSub" style="color:#ccc"></div><button class="btn btn-dark" style="margin-top:16px;width:auto;padding:12px 24px" onclick="closeKillCam()">Tutup</button></div>
 <div id="voiceBar" style="display:none">
-  <div class="vInfo"><b id="voiceStatus">🎤 Voice OFF</b><small id="voiceSub">Klik NYALAIN buat ngobrol suara</small></div>
-  <div id="voiceList"></div>
-  <button class="voiceBtn off" id="pttModeBtn" onclick="togglePTTMode()" title="Ganti mode">🎙️ PTT: ON</button>
-  <button class="voiceBtn off" id="voiceMainBtn">🎤 NYALAIN VOICE</button>
-  <button class="voiceBtn off" id="voiceMuteBtn" style="display:none" onclick="toggleMute()">🔊</button>
+<div class="vInfo"><b id="voiceStatus">🎤 Voice OFF</b><small id="voiceSub">Otomatis nyala pas pagi / voting</small></div>
+<div id="voiceList"></div>
+<button class="voiceBtn off" id="voiceMainBtn" onclick="toggleVoiceBtnBaru()">🔊 MATIKAN SUARA</button>
 </div>
 <div id="voiceAudios"></div>
 <script src="/socket.io/socket.io.js"></script>
@@ -329,7 +327,8 @@ input[type=text],input[type=number]{width:100%;padding:14px;border-radius:14px;b
 let socket = io({ reconnection: true, reconnectionAttempts: 999, reconnectionDelay: 1000, reconnectionDelayMax: 5000, timeout: 20000, transports: ["websocket", "polling"] }), myCode = null, myName = null, myRole = null, lastNarration = "", musicOn = true, socketConnected = false, currentPhase = 'lobby', isHostNow = false, myRoleData = null, lastPlayers = [];
 let pendingAdImage = null, adTimerInt = null;
 let voiceOn = false, voiceMuted = false, localStream = null, voicePeers = {}, voiceNames = {}, speakingCheckInt = null, mySpeaking = false;
-let pttMode = true, pttHolding = false;
+let pttMode = false, pttHolding = false;
+let voiceUserMuted = false;
 const el = id => document.getElementById(id);
 function esc(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function showHomeError(msg){ let e=el('homeError'); e.style.display='block'; e.innerText=msg; }
@@ -374,22 +373,40 @@ function updateVoiceUI(){
   let names = Object.values(voiceNames);
   list.innerHTML = names.map(n=>`<span class="voiceChip ${n.speaking?'speaking':''}">${n.speaking?'🟢 ':''}${esc(n.name)}</span>`).join('') || '';
 }
-function togglePTTMode(){ pttMode = !pttMode; pttHolding = false; if(pttMode && voiceOn){ setVoiceMuted(true); } if(!pttMode && voiceOn){ setVoiceMuted(false); } updateVoiceUI(); }
-function setPTTHolding(holding){ if(!voiceOn || !pttMode) return; if(currentPhase === 'night') return; pttHolding = holding; setVoiceMuted(!holding, true); updateVoiceUI(); }
+function togglePTTMode(){ /* PTT DIMATIKAN */ }
+function setPTTHolding(holding){ /* PTT DIMATIKAN */ }
 async function toggleVoice(){
-  if(!myCode) return alert('Masuk room dulu!');
-  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ return alert('❌ MIC DI-BLOCK! Buka lewat HTTPS.'); }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    return alert('❌ MIC DI-BLOCK! Buka lewat HTTPS.');
+  }
   if(voiceOn){ stopVoice(); return; }
   try{
     localStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation:true, noiseSuppression:true, autoGainControl:true }, video:false });
-    voiceOn = true; voiceMuted = pttMode ? true : false;
+    voiceOn = true;
+    voiceMuted = voiceUserMuted;
     if(localStream) localStream.getAudioTracks().forEach(t=>t.enabled = !voiceMuted);
-    socket.emit('voice-join', { code: myCode }); startSpeakingDetection(); updateVoiceUI();
-    if(currentPhase === 'night'){ setVoiceMuted(true); alert('🌙 Malam hari voice auto-mute!'); }
-  }catch(e){ alert('Mic ditolak! Cek izin mic di browser. Error: ' + (e && e.name ? e.name : e)); }
+    socket.emit('voice-join', { code: myCode });
+    startSpeakingDetection();
+    updateVoiceUI();
+    if(currentPhase === 'night'){ setVoiceMuted(true); }
+  }catch(e){ alert('Mic ditolak! Cek izin mic. Error: ' + (e && e.name ? e.name : e)); }
+}
+
+function toggleVoiceBtnBaru(){
+  if(!voiceOn){
+    voiceUserMuted = false;
+    toggleVoice();
+    return;
+  }
+  voiceUserMuted = !voiceUserMuted;
+  setVoiceMuted(voiceUserMuted);
 }
 function stopVoice(){ voiceOn = false; pttHolding = false; clearInterval(speakingCheckInt); if(localStream) localStream.getTracks().forEach(t=>t.stop()); Object.values(voicePeers).forEach(pc=>{ try{pc.close()}catch(e){} }); voicePeers = {}; voiceNames = {}; document.getElementById('voiceAudios').innerHTML=''; if(myCode) socket.emit('voice-leave', { code: myCode }); updateVoiceUI(); }
-function setVoiceMuted(m, fromPTT){ voiceMuted = m; if(localStream) localStream.getAudioTracks().forEach(t=>t.enabled = !m); if(!fromPTT) updateVoiceUI(); }
+function setVoiceMuted(m, fromPTT){
+  voiceMuted = m;
+  if(localStream) localStream.getAudioTracks().forEach(t=>t.enabled = !m);
+  updateVoiceUI();
+}
 function toggleMute(){ setVoiceMuted(!voiceMuted); }
 function createPeer(targetId){
   if(voicePeers[targetId]) return voicePeers[targetId];
@@ -413,14 +430,10 @@ function startSpeakingDetection(){
 document.addEventListener('DOMContentLoaded', ()=>{
   let btn = el('voiceMainBtn'); if(!btn) return;
   btn.addEventListener('click', ()=>{ if(!voiceOn) toggleVoice(); else if(!pttMode) toggleVoice(); });
-  btn.addEventListener('touchstart', (e)=>{ if(voiceOn && pttMode){ e.preventDefault(); setPTTHolding(true); } }, {passive:false});
-  btn.addEventListener('touchend', (e)=>{ if(voiceOn && pttMode){ e.preventDefault(); setPTTHolding(false); } });
   btn.addEventListener('touchcancel', ()=>{ if(voiceOn && pttMode) setPTTHolding(false); });
   btn.addEventListener('mousedown', ()=>{ if(voiceOn && pttMode) setPTTHolding(true); });
   btn.addEventListener('mouseup', ()=>{ if(voiceOn && pttMode) setPTTHolding(false); });
   btn.addEventListener('mouseleave', ()=>{ if(voiceOn && pttMode) setPTTHolding(false); });
-  document.addEventListener('keydown', (e)=>{ if(e.code === 'Space' && voiceOn && pttMode && !e.repeat){ let tag = document.activeElement?.tagName; if(tag === 'INPUT' || tag === 'TEXTAREA') return; e.preventDefault(); setPTTHolding(true); } });
-  document.addEventListener('keyup', (e)=>{ if(e.code === 'Space' && voiceOn && pttMode){ setPTTHolding(false); } });
 });
 socket.on('voice-users', async d => { for(let id of d.users){ await makeOffer(id); } });
 socket.on('voice-user-joined', async d => { voiceNames[d.id] = { name: d.name, speaking:false }; updateVoiceUI(); await makeOffer(d.id); });
@@ -430,7 +443,16 @@ socket.on('voice-offer', async d => { let pc = voicePeers[d.from] || createPeer(
 socket.on('voice-answer', async d => { let pc = voicePeers[d.from]; if(pc) await pc.setRemoteDescription(new RTCSessionDescription(d.answer)); });
 socket.on('voice-ice', async d => { let pc = voicePeers[d.from]; if(pc && d.candidate) try{ await pc.addIceCandidate(new RTCIceCandidate(d.candidate)); }catch(e){} });
 socket.on('voice-speaking', d => { if(voiceNames[d.id]){ voiceNames[d.id].speaking = d.speaking; } else { voiceNames[d.id] = { name: d.name || 'Pemain', speaking: d.speaking }; } updateVoiceUI(); });
-function applyVoicePhase(){ if(!voiceOn) return; if(currentPhase === 'night'){ setVoiceMuted(true); el('voiceSub').innerText = '🌙 Malam hari - Voice auto-mute biar gak ketauan role!'; } }
+async function applyVoicePhase(){
+  if(currentPhase === 'night'){
+    if(voiceOn) setVoiceMuted(true);
+    return;
+  }
+  if(currentPhase === 'day'){
+    if(!voiceOn) await toggleVoice();
+    else setVoiceMuted(voiceUserMuted);
+  }
+}
 function toggleAdMini(where){ let body=el('adMiniBody'+where); let btn=el('adToggle'+where); let isOpen=body.classList.contains('open'); if(isOpen){ body.classList.remove('open'); btn.innerText='+ Buka'; } else { body.classList.add('open'); btn.innerText='- Tutup'; } }
 function updateAdPanels(){ let show=isHostNow; el('adPanelLobby').style.display=show?'block':'none'; el('adPanelGame').style.display=(show && el('gameScreen').style.display!=='none')?'block':'none'; }
 function onAdFile(input, previewId){

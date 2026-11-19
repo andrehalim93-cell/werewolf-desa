@@ -293,29 +293,35 @@ input[type=password]{width:100%;padding:14px;border-radius:14px;border:1px solid
 <div id="userBar"><span>👋 Halo, <b id="userBarName"></b> <small id="userBarId" style="color:#b9a5d6"></small></span><button class="btn btn-dark btn-small" onclick="doLogout()">Keluar</button></div>
 
 <div id="homeScreen"><div class="homeWrap"><div class="card" id="authCard">
+<div id="loginForm">
 <div style="text-align:center;font-size:12px;color:#d8c8f0;margin-bottom:12px">Login dulu biar ID kamu ke-save kayak Mahjong...</div>
 <input type="text" id="authId" placeholder="ID Kamu (3-20 huruf, tanpa spasi)" maxlength="20" autocomplete="off">
 <input type="password" id="authPass" placeholder="Password (minimal 4)" autocomplete="off">
-<input type="text" id="authName" placeholder="Nama di game (buat Daftar aja)" maxlength="15" autocomplete="off">
-<div style="margin:8px 0 4px;font-size:12px;color:#d8c8f0">🖼️ Pilih Avatar pas Daftar:</div>
-<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-  <div id="avatarPreview" style="width:56px;height:56px;min-width:56px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#ec4899);display:flex;align-items:center;justify-content:center;font-size:28px;border:2px solid #a855f7">🧑</div>
-  <div style="display:flex;gap:6px;flex-wrap:wrap">
-    <button type="button" class="avPick on" onclick="pickAvatar('🧑',this)">🧑</button>
-    <button type="button" class="avPick" onclick="pickAvatar('🐺',this)">🐺</button>
-    <button type="button" class="avPick" onclick="pickAvatar('🧙',this)">🧙</button>
-    <button type="button" class="avPick" onclick="pickAvatar('👑',this)">👑</button>
-    <button type="button" class="avPick" onclick="pickAvatar('😎',this)">😎</button>
-    <button type="button" class="avPick" onclick="pickAvatar('🦊',this)">🦊</button>
-    <label style="background:#facc15;color:#000;font-size:11px;font-weight:800;padding:8px 10px;border-radius:99px;cursor:pointer">📸 PAKAI FOTO<input type="file" accept="image/*" style="display:none" onchange="onAvatarFile(this)"></label>
-  </div>
-</div>
 <label class="rememberRow"><input type="checkbox" id="rememberMe" checked> ✅ Ingat ID & Password saya (kayak Mahjong)</label>
-<div class="row2">
-  <button class="btn btn-primary" onclick="doLogin()">🔑 LOGIN</button>
-  <button class="btn btn-dark" onclick="doRegister()">📝 DAFTAR</button>
-</div>
+<div class="row2"><button class="btn btn-primary" onclick="doLogin()">🔑 LOGIN</button><button class="btn btn-dark" onclick="showRegister()">📝 DAFTAR</button></div>
 <div id="authMsg"></div>
+</div>
+<div id="registerForm" style="display:none">
+<div style="text-align:center;font-size:12px;color:#d8c8f0;margin-bottom:12px">Bikin akun baru dulu...</div>
+<input type="text" id="regName" placeholder="Nama di game" maxlength="15" autocomplete="off">
+<div style="margin:8px 0 4px;font-size:12px;color:#d8c8f0">🖼️ Pilih Avatar:</div>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+<div id="avatarPreview" style="width:56px;height:56px;min-width:56px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#ec4899);display:flex;align-items:center;justify-content:center;font-size:28px;border:2px solid #a855f7">🧑</div>
+<div style="display:flex;gap:6px;flex-wrap:wrap">
+<button type="button" class="avPick on" onclick="pickAvatar('🧑',this)">🧑</button>
+<button type="button" class="avPick" onclick="pickAvatar('🐺',this)">🐺</button>
+<button type="button" class="avPick" onclick="pickAvatar('🧙',this)">🧙</button>
+<button type="button" class="avPick" onclick="pickAvatar('👑',this)">👑</button>
+<button type="button" class="avPick" onclick="pickAvatar('😎',this)">😎</button>
+<button type="button" class="avPick" onclick="pickAvatar('🦊',this)">🦊</button>
+<label style="background:#facc15;color:#000;font-size:11px;font-weight:800;padding:8px 10px;border-radius:99px;cursor:pointer">📸 PAKAI FOTO<input type="file" accept="image/*" style="display:none" onchange="onAvatarFile(this)"></label>
+</div></div>
+<input type="text" id="regId" placeholder="ID Baru (3-20 huruf)" maxlength="20" autocomplete="off">
+<input type="password" id="regPass" placeholder="Password Baru (minimal 4)" autocomplete="off">
+<div class="row2"><button class="btn btn-dark" onclick="showLogin()">⬅️ KEMBALI</button><button class="btn btn-primary" onclick="doRegister()">📝 DAFTAR SEKARANG</button></div>
+<div id="regMsg"></div>
+</div>
+</div>
 </div>
 
 <div class="card" id="playCard" style="display:none">
@@ -326,6 +332,17 @@ input[type=password]{width:100%;padding:14px;border-radius:14px;border:1px solid
 <div id="homeError" style="display:none;color:#ff6a6a;font-size:12px;text-align:center;margin-top:10px"></div>
 <button class="btn btn-dark" style="margin-top:10px" onclick="openRules()">📜 LIHAT RULES DULU</button>
 </div></div></div>
+<div id="menuScreen" style="display:none"><div class="homeWrap">
+<div class="card" id="playCard">
+<div style="text-align:center;font-size:12px;color:#d8c8f0;margin-bottom:12px">Masukin Kode Desa...</div>
+<input type="text" id="nameInput" placeholder="Nama kamu..." maxlength="15" autocomplete="off" style="display:none">
+<input type="text" id="codeInput" placeholder="Kode Desa" maxlength="4" style="text-transform:uppercase" autocomplete="off">
+<div class="row2"><button class="btn btn-primary" id="btnCreate" onclick="createRoom()">🏠 BUAT DESA</button><button class="btn btn-dark" id="btnJoin" onclick="joinRoom()">🚪 GABUNG</button></div>
+<div id="homeError" style="display:none;color:#ff6a6a;font-size:12px;text-align:center;margin-top:10px"></div>
+<button class="btn btn-dark" style="margin-top:10px" onclick="openRules()">📜 LIHAT RULES DULU</button>
+</div>
+</div></div>
+<div id="lobbyScreen" style="display:none"><div class="lobbyWrap"><div class="card" style="text-align:center"><div style="font-size:11px;letter-spacing:2px;color:#b9a5d6">KODE DESA KAMU</div>
 <div class="codeBig" id="roomCodeBig">----</div>
 <button class="btn btn-dark btn-small" style="margin-top:8px" onclick="copyCode()">📋 Salin Kode</button>
 <button class="btn btn-dark btn-small" style="margin-top:8px;background:rgba(255,0,0,.15);border-color:#ff4a4a" onclick="doLogout()">🚪 Logout Akun</button>
@@ -737,65 +754,12 @@ function onAvatarFile(input){
 }
 function getAvatar(){ return SELECTED_AVATAR_IMG || SELECTED_AVATAR; }
 
-async function doRegister(){
-  let id = document.getElementById('authId').value.trim();
-  let pass = document.getElementById('authPass').value;
-  let name = document.getElementById('authName').value.trim() || id;
-  let msg = document.getElementById('authMsg');
-  if(!id || id.length < 3) return msg.innerText = '❌ ID minimal 3 karakter!';
-  if(!pass || pass.length < 4) return msg.innerText = '❌ Password minimal 4 karakter!';
-  msg.innerText = '⏳ Daftar...';
-  let r = await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id, password:pass, display_name:name, avatar:getAvatar()})});
-  let d = await r.json();
-  msg.innerText = d.ok ? '✅ ' + d.msg + ' - Sekarang klik LOGIN!' : '❌ ' + d.msg;
-}
-async function doLogin(){
-  let id = document.getElementById('authId').value.trim();
-  let pass = document.getElementById('authPass').value;
-  let msg = document.getElementById('authMsg');
-  if(!id || !pass) return msg.innerText = '❌ Isi ID & Password dulu!';
-  msg.innerText = '⏳ Login...';
-  let r = await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id, password:pass})});
-  let d = await r.json();
-  if(!d.ok) return msg.innerText = '❌ ' + d.msg;
-  MY_ACCOUNT = d.user;
-  if(document.getElementById('rememberMe').checked){
-    localStorage.setItem('werewolf_saved_id', id);
-    localStorage.setItem('werewolf_saved_pass', pass);
-    localStorage.setItem('werewolf_remember', '1');
-  } else {
-    localStorage.removeItem('werewolf_saved_id');
-    localStorage.removeItem('werewolf_saved_pass');
-    localStorage.removeItem('werewolf_remember');
-  }
-  if(MY_ACCOUNT.avatar) localStorage.setItem('werewolf_avatar', MY_ACCOUNT.avatar);
-  afterLogin();
-}
-function afterLogin(){
-  document.getElementById('authCard').style.display = 'none';
-  document.getElementById('playCard').style.display = 'block';
-  document.getElementById('userBar').style.display = 'flex';
-  document.getElementById('userBarName').innerText = MY_ACCOUNT.display_name || MY_ACCOUNT.id;
-  document.getElementById('userBarId').innerText = '(@' + MY_ACCOUNT.id + ')';
-  let av = MY_ACCOUNT.avatar || localStorage.getItem('werewolf_avatar') || '🧑';
-  let avEl = document.getElementById('userBarAvatar');
-  if(avEl){
-    if(av.startsWith('data:image')){ avEl.innerText=''; avEl.style.backgroundImage='url('+av+')'; avEl.style.backgroundSize='cover'; }
-    else { avEl.innerText = av; avEl.style.backgroundImage='none'; }
-  }
-  let ni = document.getElementById('nameInput'); if(ni) ni.value = MY_ACCOUNT.display_name || MY_ACCOUNT.id;
-}
-function doLogout(){
-  MY_ACCOUNT = null;
-  localStorage.removeItem('werewolf_saved_id');
-  localStorage.removeItem('werewolf_saved_pass');
-  localStorage.removeItem('werewolf_remember');
-  document.getElementById('authCard').style.display = 'block';
-  document.getElementById('playCard').style.display = 'none';
-  document.getElementById('userBar').style.display = 'none';
-  document.getElementById('authPass').value = '';
-  document.getElementById('authMsg').innerText = '👋 Udah logout.';
-}
+function showRegister(){document.getElementById('loginForm').style.display='none';document.getElementById('registerForm').style.display='block';let v=document.getElementById('authId').value;if(v)document.getElementById('regId').value=v;}
+function showLogin(){document.getElementById('registerForm').style.display='none';document.getElementById('loginForm').style.display='block';}
+async function doRegister(){let id=document.getElementById('regId').value.trim();let pass=document.getElementById('regPass').value;let name=document.getElementById('regName').value.trim()||id;let msg=document.getElementById('regMsg');if(!id||id.length<3)return msg.innerText='❌ ID minimal 3 karakter!';if(!pass||pass.length<4)return msg.innerText='❌ Password minimal 4 karakter!';msg.innerText='⏳ Daftar...';let r=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,password:pass,display_name:name,avatar:getAvatar()})});let d=await r.json();if(!d.ok)return msg.innerText='❌ '+d.msg;msg.innerText='✅ Berhasil! Balik ke LOGIN ya...';document.getElementById('authId').value=id;document.getElementById('authPass').value=pass;setTimeout(showLogin,800);}
+async function doLogin(){let id=document.getElementById('authId').value.trim();let pass=document.getElementById('authPass').value;let msg=document.getElementById('authMsg');if(!id||!pass)return msg.innerText='❌ Isi ID & Password dulu!';msg.innerText='⏳ Login...';let r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,password:pass})});let d=await r.json();if(!d.ok)return msg.innerText='❌ '+d.msg;MY_ACCOUNT=d.user;if(document.getElementById('rememberMe').checked){localStorage.setItem('werewolf_saved_id',id);localStorage.setItem('werewolf_saved_pass',pass);localStorage.setItem('werewolf_remember','1');}else{localStorage.removeItem('werewolf_saved_id');localStorage.removeItem('werewolf_saved_pass');localStorage.removeItem('werewolf_remember');}if(MY_ACCOUNT.avatar)localStorage.setItem('werewolf_avatar',MY_ACCOUNT.avatar);afterLogin();}
+function afterLogin(){document.getElementById('homeScreen').style.display='none';document.getElementById('authCard').style.display='none';document.getElementById('menuScreen').style.display='block';document.getElementById('playCard').style.display='block';document.getElementById('userBar').style.display='flex';document.getElementById('userBarName').innerText=MY_ACCOUNT.display_name||MY_ACCOUNT.id;document.getElementById('userBarId').innerText='(@'+MY_ACCOUNT.id+')';let av=MY_ACCOUNT.avatar||localStorage.getItem('werewolf_avatar')||'🧑';let avEl=document.getElementById('userBarAvatar');if(avEl){if(typeof av==='string'&&av.startsWith('data:image')){avEl.innerText='';avEl.style.backgroundImage='url('+av+')';avEl.style.backgroundSize='cover';avEl.style.backgroundPosition='center';}else{avEl.innerText=av;avEl.style.backgroundImage='none';}}let ni=document.getElementById('nameInput');if(ni)ni.value=MY_ACCOUNT.display_name||MY_ACCOUNT.id;}
+function doLogout(){MY_ACCOUNT=null;localStorage.removeItem('werewolf_saved_id');localStorage.removeItem('werewolf_saved_pass');localStorage.removeItem('werewolf_remember');document.getElementById('homeScreen').style.display='block';document.getElementById('authCard').style.display='block';document.getElementById('menuScreen').style.display='none';document.getElementById('playCard').style.display='none';document.getElementById('userBar').style.display='none';document.getElementById('lobbyScreen').style.display='none';document.getElementById('gameScreen').style.display='none';showLogin();document.getElementById('authPass').value='';document.getElementById('authMsg').innerText='👋 Udah logout.';}
 // AUTO-ISI PAS BUKA WEB
 (function autoFill(){
   let savedId = localStorage.getItem('werewolf_saved_id');
